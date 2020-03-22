@@ -3,6 +3,7 @@ package student_player;
 import Saboteur.SaboteurMove;
 import Saboteur.cardClasses.SaboteurCard;
 import Saboteur.cardClasses.SaboteurMap;
+import Saboteur.cardClasses.SaboteurTile;
 import boardgame.Move;
 
 import Saboteur.SaboteurPlayer;
@@ -40,7 +41,7 @@ public class StudentPlayer extends SaboteurPlayer {
 
         System.out.println("Choosing best move");
         System.out.println("Current player is " + boardState.getTurnPlayer());
-        boardState.printBoard();
+        //boardState.printBoard();
 
         ArrayList<SaboteurCard> myHand = boardState.getCurrentPlayerCards();
 
@@ -49,9 +50,41 @@ public class StudentPlayer extends SaboteurPlayer {
         Object[] myHandList = myHand.toArray();
         Object[] myMoveList = possibleMoves.toArray();
 
+        int hiddenx = 0;
+        int hiddeny = 0;
+        boolean hiddenCard = false;
+
+        SaboteurTile[][] board = boardState.getHiddenBoard();
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board[0].length; j++) {
+                if(board[i][j] != null) {
+                    if (board[i][j].getName().equals("Tile:nugget")) {
+                        System.out.println("Nugget location: " + i + " " + j + " ");
+                    }
+                    if (board[i][j].getName().equals("Tile:8")) {
+                        hiddenCard = true;
+                        System.out.println("Hidden location: " + i + " " + j + " ");
+                        hiddenx = i;
+                        hiddeny = j;
+                    }
+                    System.out.println(board[i][j].getName());
+                }
+            }
+        }
+
+
         boolean hasMapCard = false;
         for (int i = 0; i < myHand.size(); i++) {
+            SaboteurCard c = myHand.get(i);
+            if (c.getName().equals("Map")) {
+                hasMapCard = true;
+            }
+        }
+        System.out.println("Do I have map card? " + hasMapCard);
 
+        if (hasMapCard && hiddenCard) {
+            myMove = new SaboteurMove(new SaboteurMap(),hiddenx,hiddeny,id);
+            return myMove;
         }
 
         for (int j = 0; j < myMoveList.length; j++) {
