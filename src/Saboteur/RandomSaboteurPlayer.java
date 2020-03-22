@@ -24,7 +24,9 @@ public class RandomSaboteurPlayer extends SaboteurPlayer {
     public Move chooseMove(SaboteurBoardState boardState) {
         // Is random the best you can do?
         SaboteurMove myMove = boardState.getRandomMove();
-
+        while (myMove.getCardPlayed().getName().startsWith("Destroy") == true) {
+            myMove = boardState.getRandomMove();
+        }
         return myMove;
     }
 }

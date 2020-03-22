@@ -248,6 +248,9 @@ public class StudentPlayer extends SaboteurPlayer {
                 myMove = boardState.getRandomMove();
             }
         }*/
+        while (myMove.getCardPlayed().getName().startsWith("Destroy") == true) {
+            myMove = boardState.getRandomMove();
+        }
         return myMove;
     }
 }
