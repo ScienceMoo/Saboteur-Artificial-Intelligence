@@ -1,9 +1,7 @@
 package student_player;
 
 import Saboteur.SaboteurMove;
-import Saboteur.cardClasses.SaboteurCard;
-import Saboteur.cardClasses.SaboteurMap;
-import Saboteur.cardClasses.SaboteurTile;
+import Saboteur.cardClasses.*;
 import boardgame.Move;
 
 import Saboteur.SaboteurPlayer;
@@ -39,7 +37,7 @@ public class StudentPlayer extends SaboteurPlayer {
 
         int id = boardState.getTurnPlayer();
 
-        System.out.println("Choosing best move");
+        System.out.println("MY PLAYER");
         System.out.println("Current player is " + boardState.getTurnPlayer());
         //boardState.printBoard();
 
@@ -53,6 +51,9 @@ public class StudentPlayer extends SaboteurPlayer {
         int hiddenx = 0;
         int hiddeny = 0;
         boolean hiddenCard = false;
+        boolean nuggetLocationKnown = false;
+        int nuggetX = 0;
+        int nuggetY = 0;
 
         SaboteurTile[][] board = boardState.getHiddenBoard();
         for (int i = 0; i < board.length; i++) {
@@ -60,6 +61,9 @@ public class StudentPlayer extends SaboteurPlayer {
                 if(board[i][j] != null) {
                     if (board[i][j].getName().equals("Tile:nugget")) {
                         System.out.println("Nugget location: " + i + " " + j + " ");
+                        nuggetLocationKnown = true;
+                        nuggetX = i;
+                        nuggetY = j;
                     }
                     if (board[i][j].getName().equals("Tile:8")) {
                         hiddenCard = true;
@@ -72,24 +76,65 @@ public class StudentPlayer extends SaboteurPlayer {
             }
         }
 
-
+        // FIND OUT WHAT CARDS I HAVE
         boolean hasMapCard = false;
+        boolean hasMalusCard = false;
+        boolean hasBonusCard = false;
+
+        System.out.println("My hand: ");
         for (int i = 0; i < myHand.size(); i++) {
             SaboteurCard c = myHand.get(i);
+
+            System.out.print(c.getName() + ", ");
             if (c.getName().equals("Map")) {
                 hasMapCard = true;
             }
+            if (c.getName().equals("Malus")) {
+                hasMalusCard = true;
+            }
+            if (c.getName().equals("Bonus")) {
+                hasBonusCard = true;
+            }
         }
-        System.out.println("Do I have map card? " + hasMapCard);
+        System.out.println("\n");
+        System.out.println("Map card? " + hasMapCard);
+        System.out.println("Malus card? " + hasMalusCard);
+        System.out.println("Bonus card? " + hasBonusCard);
 
-        if (hasMapCard && hiddenCard) {
+
+        boolean isMalus = true;
+
+        System.out.println("My possible moves: ");
+        for (int i = 0; i < possibleMoves.size(); i++) {
+            SaboteurMove c = possibleMoves.get(i);
+
+            System.out.print("Card: " + c.getCardPlayed().getName() + ", ");
+            System.out.print("X_pos: " + c.getPosPlayed()[0] + ", ");
+            System.out.print("Y_pos: " + c.getPosPlayed()[1]);
+            if (c.getCardPlayed().getName().startsWith("Tile")) {
+                isMalus = false;
+            }
+        }
+        System.out.println("\n");
+
+        if (hasMalusCard) {
+            myMove = new SaboteurMove((new SaboteurMalus()),0,0,id);
+            return myMove;
+        }
+
+        else if (hasMapCard && hiddenCard && !nuggetLocationKnown) {
             myMove = new SaboteurMove(new SaboteurMap(),hiddenx,hiddeny,id);
             return myMove;
         }
 
-        for (int j = 0; j < myMoveList.length; j++) {
-            System.out.println(myMoveList[j].toString());
+        else if (isMalus && hasBonusCard) {
+            myMove = new SaboteurMove((new SaboteurBonus()),0,0,id);
         }
+
+        else if (isMalus && !hasBonusCard) {
+            myMove = new SaboteurMove(new SaboteurDrop(),4,0,id);
+        }
+
 
         // OPENING MOVE
             // Follow normal strategy but without using the destroy card (because there's no cards to destroy
