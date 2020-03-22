@@ -32,6 +32,8 @@ public class StudentPlayer extends SaboteurPlayer {
         // strategies...
         MyTools.getSomething();
 
+        boardState.printBoard();
+
         // Is random the best you can do?
         SaboteurMove myMove = boardState.getRandomMove();
 
@@ -39,7 +41,8 @@ public class StudentPlayer extends SaboteurPlayer {
 
         System.out.println("MY PLAYER");
         System.out.println("Current player is " + boardState.getTurnPlayer());
-        //boardState.printBoard();
+
+
 
         ArrayList<SaboteurCard> myHand = boardState.getCurrentPlayerCards();
 
@@ -55,6 +58,8 @@ public class StudentPlayer extends SaboteurPlayer {
         int nuggetX = 0;
         int nuggetY = 0;
 
+
+        // LOOK AT THE BOARD
         SaboteurTile[][] board = boardState.getHiddenBoard();
         for (int i = 0; i < board.length; i++) {
             for (int j = 0; j < board[0].length; j++) {
@@ -80,6 +85,8 @@ public class StudentPlayer extends SaboteurPlayer {
         boolean hasMapCard = false;
         boolean hasMalusCard = false;
         boolean hasBonusCard = false;
+        boolean hasDeadEndCard = false;
+        int deadEndCardIndex = 0;
 
         System.out.println("My hand: ");
         for (int i = 0; i < myHand.size(); i++) {
@@ -95,6 +102,16 @@ public class StudentPlayer extends SaboteurPlayer {
             if (c.getName().equals("Bonus")) {
                 hasBonusCard = true;
             }
+            if (c.getName().split(":")[0].equals("Tile")) {
+                String tileNumber = c.getName().split(":")[1];
+                if (tileNumber.equals("1") || tileNumber.equals("2") || tileNumber.equals("3")
+                        || tileNumber.equals("4") || tileNumber.equals("11") || tileNumber.equals("12")
+                        || tileNumber.equals("13") || tileNumber.equals("14") || tileNumber.equals("15")
+                ) {
+                    hasDeadEndCard = true;
+                    deadEndCardIndex = i;
+                }
+            }
         }
         System.out.println("\n");
         System.out.println("Map card? " + hasMapCard);
@@ -103,6 +120,15 @@ public class StudentPlayer extends SaboteurPlayer {
 
 
         boolean isMalus = true;
+        boolean canDestroy = false;
+        int bestDestroyableX = 0;
+
+        boolean canBonus = false;
+
+        boolean canPath = false;
+        int bestPathX = 0;
+        int bestNuggetPathY = 20;
+        String bestTile = "";
 
         System.out.println("My possible moves: ");
         for (int i = 0; i < possibleMoves.size(); i++) {
@@ -111,8 +137,53 @@ public class StudentPlayer extends SaboteurPlayer {
             System.out.print("Card: " + c.getCardPlayed().getName() + ", ");
             System.out.print("X_pos: " + c.getPosPlayed()[0] + ", ");
             System.out.print("Y_pos: " + c.getPosPlayed()[1]);
-            if (c.getCardPlayed().getName().startsWith("Tile")) {
+            if (c.getCardPlayed().getName().startsWith("Tile")
+                    && !c.getCardPlayed().getName().split(":")[1].equals("1")
+                    && !c.getCardPlayed().getName().split(":")[1].equals("1_flip")
+                    && !c.getCardPlayed().getName().split(":")[1].equals("2")
+                    && !c.getCardPlayed().getName().split(":")[1].equals("2_flip")
+                    && !c.getCardPlayed().getName().split(":")[1].equals("3")
+                    && !c.getCardPlayed().getName().split(":")[1].equals("3_flip")
+                    && !c.getCardPlayed().getName().split(":")[1].equals("4")
+                    && !c.getCardPlayed().getName().split(":")[1].equals("4_flip")
+                    && !c.getCardPlayed().getName().split(":")[1].equals("11")
+                    && !c.getCardPlayed().getName().split(":")[1].equals("11_flip")
+                    && !c.getCardPlayed().getName().split(":")[1].equals("12")
+                    && !c.getCardPlayed().getName().split(":")[1].equals("12_flip")
+                    && !c.getCardPlayed().getName().split(":")[1].equals("13")
+                    && !c.getCardPlayed().getName().split(":")[1].equals("14")
+                    && !c.getCardPlayed().getName().split(":")[1].equals("14_flip")
+                    && !c.getCardPlayed().getName().split(":")[1].equals("15")
+
+            ) {
                 isMalus = false;
+                SaboteurTile aTile = (SaboteurTile) c.getCardPlayed();
+                canPath = true;
+                if (c.getPosPlayed()[0] > bestPathX) {
+                    bestPathX = c.getPosPlayed()[0];
+                    bestNuggetPathY = c.getPosPlayed()[1];
+                    bestTile = c.getCardPlayed().getName().split(":")[1];
+                }
+                else if (nuggetLocationKnown) {
+                    if (Math.abs(c.getPosPlayed()[1] - nuggetY) < Math.abs(bestNuggetPathY - nuggetY)) {
+                        bestPathX = c.getPosPlayed()[0];
+                        bestNuggetPathY = c.getPosPlayed()[1];
+                        bestTile = c.getCardPlayed().getName().split(":")[1];
+                    }
+                }
+                else if (!nuggetLocationKnown) {
+                    if (Math.abs(c.getPosPlayed()[1] - 5) < Math.abs(bestNuggetPathY - 5)) {
+                        bestPathX = c.getPosPlayed()[0];
+                        bestNuggetPathY = c.getPosPlayed()[1];
+                        bestTile = c.getCardPlayed().getName().split(":")[1];
+                    }
+                }
+            }
+            if (c.getCardPlayed().getName().startsWith("Destroy")) {
+                canDestroy = true;
+            }
+            if (c.getCardPlayed().getName().startsWith("Bonus")) {
+                canBonus = true;
             }
         }
         System.out.println("\n");
@@ -127,12 +198,20 @@ public class StudentPlayer extends SaboteurPlayer {
             return myMove;
         }
 
-        else if (isMalus && hasBonusCard) {
+        else if (isMalus && hasBonusCard && canBonus) {
             myMove = new SaboteurMove((new SaboteurBonus()),0,0,id);
         }
 
-        else if (isMalus && !hasBonusCard) {
-            myMove = new SaboteurMove(new SaboteurDrop(),4,0,id);
+        else if (isMalus && canDestroy) {
+            // get best destroy
+        }
+
+        else if (isMalus && !hasBonusCard && hasDeadEndCard) {
+            myMove = new SaboteurMove(new SaboteurDrop(),deadEndCardIndex,0,id);
+        }
+
+        else if (!isMalus && canPath) {
+            myMove = new SaboteurMove((new SaboteurTile(bestTile)),bestPathX,bestNuggetPathY,id);
         }
 
 
@@ -163,6 +242,12 @@ public class StudentPlayer extends SaboteurPlayer {
                 // Use a destroy card to destroy a dead-end that is closest
 
         // Return your move to be processed by the server.
+
+        /*if (maybeCanPath) {
+            while (myMove.getCardPlayed().getName().startsWith("Tile") == false) {
+                myMove = boardState.getRandomMove();
+            }
+        }*/
         return myMove;
     }
 }
