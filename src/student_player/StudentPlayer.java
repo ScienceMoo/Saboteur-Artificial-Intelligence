@@ -58,10 +58,31 @@ public class StudentPlayer extends SaboteurPlayer {
             System.out.println(myMoveList[j].toString());
         }
 
-        // Check if you have a Map card
-        // Calculate x position of the objective card I want to see (maybe eliminate the farthest one first)
-        // Get the y position
-        // Include the player ID
+        // OPENING MOVE
+            // Follow normal strategy but without using the destroy card (because there's no cards to destroy
+
+        //GENERAL STRATEGY
+            // CHECK FOR WINNING MOVE, AND DO IT... otherwise:
+
+            // FIRST USE MALUS
+                // Destroy the other player's chances of getting anywhere early on
+
+            // FIRST USE MAP CARD
+                // Check if you have a Map card
+                // Calculate x position of the objective card I want to see (maybe eliminate the farthest one first)
+                // Get the y position
+                // Include the player ID
+
+            // IF THERE's A MALUS
+                // fix it with a bonus card
+                // if no bonus, discard a dead-end path card
+
+            // MOVE TOWARDS OBJECTIVES
+                // If all the objectives are hidden, go towards the middle one
+                // Prioritize map cards with more options
+
+            // IF All PATHS BRING YOU FARTHER AWAY
+                // Use a destroy card to destroy a dead-end that is closest
 
         // Return your move to be processed by the server.
         return myMove;
