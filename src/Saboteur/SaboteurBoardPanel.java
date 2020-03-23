@@ -96,7 +96,7 @@ public class SaboteurBoardPanel extends BoardPanel implements MouseListener, Mou
         try{
             URL url = getClass().getResource("tiles");
             String basePath = ((URL) url).getPath();
-            this.background = ImageIO.read(new File(basePath + "\\backgroundSmall.png"));
+            this.background = ImageIO.read(new File(basePath + "/backgroundSmall.png"));
         }catch (IOException ie){
             System.out.println("problem loading background image");
         }
