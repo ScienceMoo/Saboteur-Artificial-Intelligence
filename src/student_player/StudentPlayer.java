@@ -32,15 +32,15 @@ public class StudentPlayer extends SaboteurPlayer {
         // strategies...
         MyTools.getSomething();
 
-        boardState.printBoard();
+        //boardState.printBoard();
 
         // Is random the best you can do?
         SaboteurMove myMove = boardState.getRandomMove();
 
         int id = boardState.getTurnPlayer();
 
-        System.out.println("MY PLAYER");
-        System.out.println("Current player is " + boardState.getTurnPlayer());
+        //System.out.println("MY PLAYER");
+        //System.out.println("Current player is " + boardState.getTurnPlayer());
 
 
 
@@ -65,18 +65,18 @@ public class StudentPlayer extends SaboteurPlayer {
             for (int j = 0; j < board[0].length; j++) {
                 if(board[i][j] != null) {
                     if (board[i][j].getName().equals("Tile:nugget")) {
-                        System.out.println("Nugget location: " + i + " " + j + " ");
+                        //System.out.println("Nugget location: " + i + " " + j + " ");
                         nuggetLocationKnown = true;
                         nuggetX = i;
                         nuggetY = j;
                     }
                     if (board[i][j].getName().equals("Tile:8")) {
                         hiddenCard = true;
-                        System.out.println("Hidden location: " + i + " " + j + " ");
+                        //System.out.println("Hidden location: " + i + " " + j + " ");
                         hiddenx = i;
                         hiddeny = j;
                     }
-                    System.out.println(board[i][j].getName());
+                    //System.out.println(board[i][j].getName());
                 }
             }
         }
@@ -88,11 +88,11 @@ public class StudentPlayer extends SaboteurPlayer {
         boolean hasDeadEndCard = false;
         int deadEndCardIndex = 0;
 
-        System.out.println("My hand: ");
+        //System.out.println("My hand: ");
         for (int i = 0; i < myHand.size(); i++) {
             SaboteurCard c = myHand.get(i);
 
-            System.out.print(c.getName() + ", ");
+            //System.out.print(c.getName() + ", ");
             if (c.getName().equals("Map")) {
                 hasMapCard = true;
             }
@@ -113,10 +113,10 @@ public class StudentPlayer extends SaboteurPlayer {
                 }
             }
         }
-        System.out.println("\n");
-        System.out.println("Map card? " + hasMapCard);
-        System.out.println("Malus card? " + hasMalusCard);
-        System.out.println("Bonus card? " + hasBonusCard);
+        //System.out.println("\n");
+        //System.out.println("Map card? " + hasMapCard);
+        //System.out.println("Malus card? " + hasMalusCard);
+        //System.out.println("Bonus card? " + hasBonusCard);
 
 
         boolean isMalus = true;
@@ -127,16 +127,16 @@ public class StudentPlayer extends SaboteurPlayer {
 
         boolean canPath = false;
         int bestPathX = 0;
-        int bestNuggetPathY = 20;
+        int bestNuggetPathY = 0;
         String bestTile = "";
 
-        System.out.println("My possible moves: ");
+        //System.out.println("My possible moves: ");
         for (int i = 0; i < possibleMoves.size(); i++) {
             SaboteurMove c = possibleMoves.get(i);
 
-            System.out.print("Card: " + c.getCardPlayed().getName() + ", ");
-            System.out.print("X_pos: " + c.getPosPlayed()[0] + ", ");
-            System.out.print("Y_pos: " + c.getPosPlayed()[1]);
+            //System.out.print("Card: " + c.getCardPlayed().getName() + ", ");
+            //System.out.print("X_pos: " + c.getPosPlayed()[0] + ", ");
+            //System.out.print("Y_pos: " + c.getPosPlayed()[1]);
             if (c.getCardPlayed().getName().startsWith("Tile")
                     && !c.getCardPlayed().getName().split(":")[1].equals("1")
                     && !c.getCardPlayed().getName().split(":")[1].equals("1_flip")
@@ -159,7 +159,7 @@ public class StudentPlayer extends SaboteurPlayer {
                 isMalus = false;
                 SaboteurTile aTile = (SaboteurTile) c.getCardPlayed();
                 canPath = true;
-                if (c.getPosPlayed()[0] > bestPathX) {
+                if (Math.abs(c.getPosPlayed()[0] - 12) < Math.abs(bestPathX - 12)) {
                     bestPathX = c.getPosPlayed()[0];
                     bestNuggetPathY = c.getPosPlayed()[1];
                     bestTile = c.getCardPlayed().getName().split(":")[1];
@@ -186,7 +186,7 @@ public class StudentPlayer extends SaboteurPlayer {
                 canBonus = true;
             }
         }
-        System.out.println("\n");
+        //System.out.println("\n");
 
         if (hasMalusCard) {
             myMove = new SaboteurMove((new SaboteurMalus()),0,0,id);
@@ -202,16 +202,16 @@ public class StudentPlayer extends SaboteurPlayer {
             myMove = new SaboteurMove((new SaboteurBonus()),0,0,id);
         }
 
-        else if (isMalus && canDestroy) {
-            // get best destroy
-        }
-
         else if (isMalus && !hasBonusCard && hasDeadEndCard) {
             myMove = new SaboteurMove(new SaboteurDrop(),deadEndCardIndex,0,id);
         }
 
         else if (!isMalus && canPath) {
             myMove = new SaboteurMove((new SaboteurTile(bestTile)),bestPathX,bestNuggetPathY,id);
+        }
+
+        else if (isMalus && canDestroy) {
+            // get best destroy
         }
 
 
