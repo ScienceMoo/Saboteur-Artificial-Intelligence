@@ -1,6 +1,7 @@
 package autoplay;
 
 import java.io.IOException;
+import java.lang.ProcessBuilder.Redirect;
 
 //Author: Lilly Tong, Eric Crawford
 //
@@ -13,11 +14,11 @@ import java.io.IOException;
 //
 // Note: The script is currently set up to have the StudentPlayer play against
 // RandomHusPlayer. In order to have different players participate, you need
-// to change the variables ``client1_line`` and ``client2_line``. Make sure
+// to change the variables ``client1_pb`` and ``client2_pb``. Make sure
 // that in those lines, the classpath and the class name is set appropriately
 // so that java can find and run the compiled code for the agent that you want
 // to test. For example to have StudentPlayer play against itself, you would
-// change ``client2_line`` to be equal to ``client1_line``.
+// change ``Saboteur.RandomSaboteurPlayer`` to be equal to ``student_player.StudentPlayer``.
 //
 public class Autoplay {
     public static void main(String args[]) {
@@ -34,11 +35,12 @@ public class Autoplay {
         }
 
         try {
-            ProcessBuilder server_pb = new ProcessBuilder("java", "-cp", "bin/production/SaboteurGame", "boardgame.Server", "-ng", "-k");
+            ProcessBuilder server_pb = new ProcessBuilder("java", "-cp", "bin/production/SaboteurGame", "boardgame.Server","-ng", "-k");
             server_pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
 
             Process server = server_pb.start();
 
+            //One need to change those variables
             ProcessBuilder client1_pb = new ProcessBuilder("java", "-cp", "bin/production/SaboteurGame", "-Xms520m", "-Xmx520m",
                     "boardgame.Client", "Saboteur.RandomSaboteurPlayer");
             client1_pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
