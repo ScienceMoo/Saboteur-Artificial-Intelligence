@@ -2,7 +2,6 @@ package student_player;
 
 import Saboteur.SaboteurBoardState;
 import Saboteur.SaboteurMove;
-import Saboteur.cardClasses.SaboteurBonus;
 import Saboteur.cardClasses.SaboteurCard;
 import Saboteur.cardClasses.SaboteurDestroy;
 import Saboteur.cardClasses.SaboteurTile;
@@ -858,5 +857,35 @@ public class MyTools {
             boardString.append("\n");
         }
         return boardString.toString();
+    }
+
+    private SequenceScore DepthFirstSearch(ArrayList<SaboteurCard> remainingCards, SaboteurTile[][] board) {
+        if (reachedEnd) {
+            return new SequenceScore(0, new ArrayList<>());
+        }
+
+        if (remainingCards.isEmpty()) {
+            return new SequenceScore(100, new ArrayList<>());
+        }
+
+        SequenceScore bestSequenceScore = new SequenceScore();
+        for (SaboteurCard card : remainingCards) {
+
+            ArrayList<SaboteurMove> possibleMoves = getPossibleMoves(hiddenRevealed, board, remainingCards, id);
+            for (SaboteurMove move : possibleMoves) {
+                ArrayList<SaboteurCard> newRemainingCards = // copy;
+                newRemainingCards.remove(card);
+                SaboteurTile[][] newBoard = addCardToBoard(board, move);
+
+                SequenceScore sequenceScore = DepthFirstSearch(newRemainingCards, newBoard);
+
+                sequenceScore.cards.add(0, move);
+                if (sequenceScore.minCardsToReachEnd > bestSequenceScore.minCardsToReachEnd) {
+                    bestSequenceScore = sequenceScore;
+                }
+            }
+        }
+
+        return bestSequenceScore;
     }
 }
