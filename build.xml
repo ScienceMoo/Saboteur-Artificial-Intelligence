@@ -23,6 +23,9 @@
         <java classpath="${run.classpath}" classname="boardgame.Client" fork="true">
             <arg value="student_player.StudentPlayer"/>
         </java>
+        <java classpath="${run.classpath}" classname="boardgame.Client" fork="true">
+            <arg value="student_player.OtherStudent"/>
+        </java>
     </target>
 
     <!-- Run server ==================================================================== -->

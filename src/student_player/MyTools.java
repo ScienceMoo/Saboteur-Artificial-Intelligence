@@ -29,8 +29,8 @@ public class MyTools {
         }
         SaboteurCard card = move.getCardPlayed();
         int[] pos = move.getPosPlayed();
-        //System.out.println("Adding card to the board");
-        //System.out.println(card.getName() + "," + pos[0] + "," + pos[1] + ".");
+        System.out.print("Adding card to the board: ");
+        System.out.println(card.getName() + "," + pos[0] + "," + pos[1] + ".");
         if (card instanceof SaboteurDestroy) {
             newBoard[pos[0]][pos[1]] = null;
         }
@@ -150,7 +150,7 @@ public class MyTools {
                         bestFirstMoveY = possibleMovesA.get(i).getPosPlayed()[1];
                         minimumNumberOfMoves = 1;
                         System.out.println("Can win in one move!");
-                        //System.out.println("bestSequence[0]: " + bestSequence[0]);
+                        System.out.println("bestSequence[0]: " + bestSequence[0]);
                         //System.out.println(movesToString(possibleMovesA));
                         break A;
                     }
@@ -170,12 +170,12 @@ public class MyTools {
                             }
                         }
                         possibleMovesB.removeAll(possibleMovesB);
-                        //System.out.println(currentHandB.toString());
+                        System.out.println("currentHandB: " + currentHandB.toString());
                         if (currentHandB.size() > 0) {
                             possibleMovesB = getPossibleMoves(hiddenRevealed, boardB, currentHandB, id);
                         }
 
-                        //System.out.println(movesToString(possibleMovesB));
+                        System.out.println("possibleMovesB: " + movesToString(possibleMovesB));
                         int b = 0;
                         B: while (b < possibleMovesB.size()) {
                             //set the card as played
@@ -195,7 +195,7 @@ public class MyTools {
                                     if (pathToHidden(boardC, targetPos) && (2 < minimumNumberOfMoves)) {
                                         firstMoveFlipped = firstMoveFlippedCurrent;
                                         System.out.println("Can win in 2 moves!");
-                                        //System.out.println(possibleMovesB);
+                                        System.out.println("possibleMovesB: " + possibleMovesB);
                                         minimumNumberOfMoves = 2;
                                         bestFirstMoveX = possibleMovesA.get(i).getPosPlayed()[0];
                                         bestFirstMoveY = possibleMovesA.get(i).getPosPlayed()[1];
