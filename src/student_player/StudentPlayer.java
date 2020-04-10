@@ -101,99 +101,39 @@ public class StudentPlayer extends SaboteurPlayer {
         boolean firstCardFlipped = false;
         ArrayList<Integer> cardsToAvoidDropping = new ArrayList<>();
 
+        int[] targetPos = new int[]{12, 5};
         if (nugget != null) {
-            int[] targetPos = new int[]{nugget.x, nugget.y};
-            int[] resultArray = MyTools.lookForWinningSequence(hiddenRevealed, boardState, myTilesAndDestroys, targetPos);
+            targetPos = new int[]{nugget.x, nugget.y};
+        } else {
+            for (int i : new int[]{0, 2, 1}) {
+                if (hiddenRevealed[i])
+                    continue;
 
-
-
-            //winningPossibleForThem = MyTools.checkIfEnemyCanWin(hiddenRevealed, boardState, targetPos);
-            if (resultArray[0] != -1) {
-                bestCardToPlayIndex = resultArray[0];
-                bestCardToPlayPositionX = resultArray[1];
-                bestCardToPlayPositionY = resultArray[2];
-                winningSequencePossible = true;
-                if (resultArray[3] == 1) {
-                    firstCardFlipped = true;
-                }
-                else {
-                    firstCardFlipped = false;
-                }
-                for (int r = 4; r < 10; r++) {
-                    if (resultArray[r] != -1){
-                        cardsToAvoidDropping.add(resultArray[r]);
-                    }
-                }
+                targetPos = new int[]{12, (2 * i) + 3};
+                break;
             }
-            else {
-                winningSequencePossible = false;
+        }
+
+        int[] resultArray = MyTools.lookForWinningSequence(hiddenRevealed, boardState, myTilesAndDestroys, targetPos);
+
+        //winningPossibleForThem = MyTools.checkIfEnemyCanWin(hiddenRevealed, boardState, targetPos);
+        if (resultArray[0] != -1) {
+            bestCardToPlayIndex = resultArray[0];
+            bestCardToPlayPositionX = resultArray[1];
+            bestCardToPlayPositionY = resultArray[2];
+            winningSequencePossible = true;
+            firstCardFlipped = resultArray[3] == 1;
+            for (int r = 4; r < 10; r++) {
+                if (resultArray[r] != -1){
+                    cardsToAvoidDropping.add(resultArray[r]);
+                }
             }
         }
         else {
-            if (!hiddenRevealed[0]) {
-                int[] targetPos = new int[]{12, 3};
-                int[] resultArray = MyTools.lookForWinningSequence(hiddenRevealed, boardState, myTilesAndDestroys, targetPos);
-                //winningPossibleForThem = MyTools.checkIfEnemyCanWin(hiddenRevealed, boardState, targetPos);
-                if (resultArray[0] != -1) {
-                    bestCardToPlayIndex = resultArray[0];
-                    bestCardToPlayPositionX = resultArray[1];
-                    bestCardToPlayPositionY = resultArray[2];
-                    winningSequencePossible = true;
-                    if (resultArray[3] == 1) {
-                        firstCardFlipped = true;
-                    }
-                    else {
-                        firstCardFlipped = false;
-                    }
-                }
-                else {
-                    winningSequencePossible = false;
-                }
-            }
-            else if (!hiddenRevealed[2]) {
-                int[] targetPos = new int[]{12, 7};
-                int[] resultArray = MyTools.lookForWinningSequence(hiddenRevealed, boardState, myTilesAndDestroys, targetPos);
-                //winningPossibleForThem = MyTools.checkIfEnemyCanWin(hiddenRevealed, boardState, targetPos);
-                if (resultArray[0] != -1) {
-                    bestCardToPlayIndex = resultArray[0];
-                    bestCardToPlayPositionX = resultArray[1];
-                    bestCardToPlayPositionY = resultArray[2];
-                    winningSequencePossible = true;
-                    if (resultArray[3] == 1) {
-                        firstCardFlipped = true;
-                    }
-                    else {
-                        firstCardFlipped = false;
-                    }
-                }
-                else {
-                    winningSequencePossible = false;
-                }
-            }
-            else if (!hiddenRevealed[1]) {
-                int[] targetPos = new int[]{12, 5};
-                int[] resultArray = MyTools.lookForWinningSequence(hiddenRevealed, boardState, myTilesAndDestroys, targetPos);
-                //winningPossibleForThem = MyTools.checkIfEnemyCanWin(hiddenRevealed, boardState, targetPos);
-                if (resultArray[0] != -1) {
-                    bestCardToPlayIndex = resultArray[0];
-                    bestCardToPlayPositionX = resultArray[1];
-                    bestCardToPlayPositionY = resultArray[2];
-                    winningSequencePossible = true;
-                    if (resultArray[3] == 1) {
-                        firstCardFlipped = true;
-                    }
-                    else {
-                        firstCardFlipped = false;
-                    }
-                }
-                else {
-                    winningSequencePossible = false;
-                }
-            }
+            winningSequencePossible = false;
         }
         System.out.println("nugget location known: " + nugget != null);
         System.out.println("winningSequencePossible: " + winningSequencePossible);
-
 
         boolean isMalus = true;
         boolean canDestroy = false;
