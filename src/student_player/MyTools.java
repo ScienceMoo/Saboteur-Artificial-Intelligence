@@ -778,7 +778,7 @@ public class MyTools {
 
         //System.out.println("Checking for successful path.");
         //System.out.println(intBoardToString(intBoard));
-        System.out.println("pathfound: " + atLeastOnefound);
+        //System.out.println("pathfound: " + atLeastOnefound);
 
         return atLeastOnefound;
     }

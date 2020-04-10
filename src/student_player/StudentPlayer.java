@@ -492,6 +492,8 @@ public class StudentPlayer extends SaboteurPlayer {
                         System.out.println("smallestCartesianDistance: " + smallestCartesianDistance);
                         System.out.println("cartesianDistance: " + cartesianDistance);
                         smallestCartesianDistance = cartesianDistance;
+                        System.out.println("smallestCartesianDistance: " + smallestCartesianDistance);
+                        System.out.println("cartesianDistance: " + cartesianDistance);
                     }
                 }
 
@@ -516,9 +518,16 @@ public class StudentPlayer extends SaboteurPlayer {
                     smallestCartesianDistance = 100;
                 }
 
+                System.out.println("smallestCartesianDistance: " + smallestCartesianDistance);
+                System.out.println("bestDistance: " + bestDistance);
+
 
                 if (smallestCartesianDistance < bestDistance) {
+                    System.out.println("smallestCartesianDistance: " + smallestCartesianDistance);
+                    System.out.println("bestDistance: " + bestDistance);
                     bestDistance = smallestCartesianDistance;
+                    System.out.println("smallestCartesianDistance: " + smallestCartesianDistance);
+                    System.out.println("bestDistance: " + bestDistance);
                     bestTile = c.getCardPlayed().getName().split(":")[1];
                     bestTileX = c.getPosPlayed()[0];
                     bestTileY = c.getPosPlayed()[1];
@@ -581,13 +590,23 @@ public class StudentPlayer extends SaboteurPlayer {
                         yDistance = (yPosPotential.get(xxx) - 5);
                     }
                     double cartesianDistance = Math.sqrt((xDistance * xDistance) + (yDistance * yDistance));
+                    System.out.println("cartesianDistance: " + cartesianDistance);
                     if (cartesianDistance < bestDestroyDistance) {
+                        System.out.println("cartesianDistance: " + cartesianDistance);
+                        System.out.println("bestDestroyDistance: " + bestDestroyDistance);
                         canDestroy = true;
                         bestDestroyableX = c.getPosPlayed()[0];
                         bestDestroyableY = c.getPosPlayed()[1];
                         bestDestroyDistance = cartesianDistance;
+                        System.out.println("cartesianDistance: " + cartesianDistance);
+                        System.out.println("bestDestroyDistance: " + bestDestroyDistance);
 
                         if (cartesianDistance < bestDistance) {
+                            System.out.println("cartesianDistance: " + cartesianDistance);
+                            System.out.println("bestDestroyDistance: " + bestDestroyDistance);
+                            bestDistance = cartesianDistance;
+                            System.out.println("cartesianDistance: " + cartesianDistance);
+                            System.out.println("bestDestroyDistance: " + bestDestroyDistance);
                             shouldDestroy = true;
                             bestDestroyableX = c.getPosPlayed()[0];
                             bestDestroyableY = c.getPosPlayed()[1];
@@ -600,6 +619,8 @@ public class StudentPlayer extends SaboteurPlayer {
                 canBonus = true;
             }
         }
+
+        System.out.println("isMalus? " + isMalus);
 
         //System.out.println("WINNING POSSIBLE FOR THEM: " + winningPossibleForThem);
         // TODO: only use malusCard if winningPossibleForThem
