@@ -29,8 +29,8 @@ public class MyTools {
         }
         SaboteurCard card = move.getCardPlayed();
         int[] pos = move.getPosPlayed();
-        System.out.print("Adding card to the board: ");
-        System.out.println(card.getName() + "," + pos[0] + "," + pos[1] + ".");
+//        System.out.print("Adding card to the board: ");
+//        System.out.println(card.getName() + "," + pos[0] + "," + pos[1] + ".");
         if (card instanceof SaboteurDestroy) {
             newBoard[pos[0]][pos[1]] = null;
         }
@@ -170,12 +170,12 @@ public class MyTools {
                             }
                         }
                         possibleMovesB.removeAll(possibleMovesB);
-                        System.out.println("currentHandB: " + currentHandB.toString());
+//                        System.out.println("currentHandB: " + currentHandB.toString());
                         if (currentHandB.size() > 0) {
                             possibleMovesB = getPossibleMoves(hiddenRevealed, boardB, currentHandB, id);
                         }
 
-                        System.out.println("possibleMovesB: " + movesToString(possibleMovesB));
+//                        System.out.println("possibleMovesB: " + movesToString(possibleMovesB));
                         int b = 0;
                         B: while (b < possibleMovesB.size()) {
                             //set the card as played
