@@ -6,31 +6,22 @@ import boardgame.Move;
 
 import Saboteur.SaboteurPlayer;
 import Saboteur.SaboteurBoardState;
-import com.sun.codemodel.internal.JCase;
 
 import java.util.ArrayList;
 
 import static student_player.MyTools.handToString;
 
-/** A player file submitted by a student. */
 public class StudentPlayer extends SaboteurPlayer {
+    private static int round = 1;
 
-    public static int round = 1;
+    private boolean[] hiddenRevealed = {false, false, false};
+    private int numHiddenRevealed = 0;
+    private Coord nugget = null;
 
-    /**
-     * You must modify this constructor to return your student number. This is
-     * important, because this is what the code that runs the competition uses to
-     * associate you with your agent. The constructor should do nothing else.
-     */
     public StudentPlayer() {
         super("260805212");
     }
 
-    /**
-     * This is the primary method that you need to implement. The ``boardState``
-     * object contains the current state of the game, which your agent must use to
-     * make decisions.
-     */
     public Move chooseMove(SaboteurBoardState boardState) {
         // You probably will make separate functions in MyTools.
         // For example, maybe you'll need to load some pre-processed best opening
@@ -60,68 +51,9 @@ public class StudentPlayer extends SaboteurPlayer {
         boolean winningSequencePossible = false;
         //boolean winningPossibleForThem = false;
 
-
-        boolean [] hiddenRevealed = new boolean[3];
-        hiddenRevealed[0] = false;
-        hiddenRevealed[1] = false;
-        hiddenRevealed[2] = false;
-
-        boolean hiddenCard = false;
-        boolean nuggetLocationKnown = false;
-        int nuggetX = 0;
-        int nuggetY = 0;
-
-
         // LOOK AT THE BOARD
         SaboteurTile[][] board = boardState.getHiddenBoard();
-        int[][] intBoard = boardState.getHiddenIntBoard();
-
-        //System.out.println(intBoard.toString());
-
-        int numHiddenRevealed = 0;
-
-        if (board[12][3].getName().equals("Tile:8")) {
-            hiddenRevealed[0] = false;
-            hiddenCard = true;
-        }
-        else {
-            numHiddenRevealed++;
-            nuggetLocationKnown = true;
-            nuggetX = 12;
-            nuggetY = 3;
-        }
-        if (board[12][5].getName().equals("Tile:8")) {
-            hiddenRevealed[0] = false;
-            hiddenCard = true;
-        }
-        else {
-            numHiddenRevealed++;
-            nuggetLocationKnown = true;
-            nuggetX = 12;
-            nuggetY = 5;
-        }
-        if (board[12][7].getName().equals("Tile:8")) {
-            hiddenRevealed[0] = false;
-            hiddenCard = true;
-        }
-        else {
-            numHiddenRevealed++;
-            nuggetLocationKnown = true;
-            nuggetX = 12;
-            nuggetY = 7;
-        }
-
-        if (numHiddenRevealed == 2) {
-            for (int i = 0; i < 3; i++) {
-                if (hiddenRevealed[i] == false) {
-                    hiddenRevealed[i] = true;
-                    nuggetLocationKnown = true;
-                    nuggetX = 12;
-                    nuggetY = (2 * i) + 3;
-                    hiddenCard = false;
-                }
-            }
-        }
+        checkNugget(board);
 
         // FIND OUT WHAT CARDS I HAVE
         boolean hasMapCard = false;
@@ -169,8 +101,8 @@ public class StudentPlayer extends SaboteurPlayer {
         boolean firstCardFlipped = false;
         ArrayList<Integer> cardsToAvoidDropping = new ArrayList<>();
 
-        if (nuggetLocationKnown) {
-            int[] targetPos = new int[]{nuggetX, nuggetY};
+        if (nugget != null) {
+            int[] targetPos = new int[]{nugget.x, nugget.y};
             int[] resultArray = MyTools.lookForWinningSequence(hiddenRevealed, boardState, myTilesAndDestroys, targetPos);
 
 
@@ -259,7 +191,7 @@ public class StudentPlayer extends SaboteurPlayer {
                 }
             }
         }
-        System.out.println("nugget location known: " + nuggetLocationKnown);
+        System.out.println("nugget location known: " + nugget != null);
         System.out.println("winningSequencePossible: " + winningSequencePossible);
 
 
@@ -471,9 +403,9 @@ public class StudentPlayer extends SaboteurPlayer {
                 for (int xxx = 0; xxx < xPosPotential.size(); xxx++){
                     int xDistance = (xPosPotential.get(xxx) - 12);
                     int yDistance = 0;
-                    if (nuggetLocationKnown) {
-                        yDistance = (yPosPotential.get(xxx) - nuggetY);
-                        target = nuggetY;
+                    if (nugget != null) {
+                        yDistance = (yPosPotential.get(xxx) - nugget.y);
+                        target = nugget.y;
                     }
                     else if (hiddenRevealed[0]) {
                         yDistance = (yPosPotential.get(xxx) - 6);
@@ -577,8 +509,8 @@ public class StudentPlayer extends SaboteurPlayer {
                 for (int xxx = 0; xxx < xPosPotential.size(); xxx++){
                     int xDistance = (xPosPotential.get(xxx) - 12);
                     int yDistance = 0;
-                    if (nuggetLocationKnown) {
-                        yDistance = (yPosPotential.get(xxx) - nuggetY);
+                    if (nugget != null) {
+                        yDistance = (yPosPotential.get(xxx) - nugget.y);
                     }
                     else if (hiddenRevealed[0]) {
                         yDistance = (yPosPotential.get(xxx) - 6);
@@ -629,7 +561,7 @@ public class StudentPlayer extends SaboteurPlayer {
             return myMove;
         }
 
-        else if (hasMapCard && hiddenCard && !nuggetLocationKnown) {
+        else if (hasMapCard && nugget == null) {
             if (!hiddenRevealed[0]) {
                 myMove = new SaboteurMove(new SaboteurMap(),12,3,id);
                 return myMove;
@@ -708,5 +640,26 @@ public class StudentPlayer extends SaboteurPlayer {
         round++;
 
         return myMove;
+    }
+
+    private void checkNugget(SaboteurTile[][] board) {
+        if (nugget != null)
+            return;
+
+        for (int y : new int[]{3, 5, 7}) {
+            if (!board[12][3].getName().equals("Tile:8")) {
+                numHiddenRevealed++;
+                nugget = new Coord(12, y);
+            }
+        }
+
+        if (numHiddenRevealed == 2) {
+            for (int i = 0; i < 3; i++) {
+                if (!hiddenRevealed[i]) {
+                    hiddenRevealed[i] = true;
+                    nugget = new Coord(12, (2 * i) + 3);
+                }
+            }
+        }
     }
 }
