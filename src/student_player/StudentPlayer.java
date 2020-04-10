@@ -1,3 +1,5 @@
+// TODO: drop maps after nugget is revealed
+
 package student_player;
 
 import Saboteur.SaboteurMove;
@@ -7,12 +9,31 @@ import boardgame.Move;
 import Saboteur.SaboteurPlayer;
 import Saboteur.SaboteurBoardState;
 
-import java.util.ArrayList;
+import java.util.*;
 
 import static student_player.MyTools.handToString;
 
 public class StudentPlayer extends SaboteurPlayer {
     private static int round = 1;
+
+    private static ArrayList<String> DEAD_END_TILES = new ArrayList<>(
+        Arrays.asList("1", "1_flip", "2", "2_flip", "3", "3_flip", "4", "4_flip", "11",
+            "11_flip", "12", "12_flip", "13", "14", "14_flip", "15")
+    );
+
+    private static HashMap<String, int[][]> DIRECTIONS = new HashMap<String, int[][]>() {{
+        put("8",        new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}});
+        put("9",        new int[][]{{1, 0},          {0, 1}, {0, -1}});
+        put("9_flip",   new int[][]{        {-1, 0}, {0, 1}, {0, -1}});
+        put("10",       new int[][]{                 {0, 1}, {0, -1}});
+        put("7",        new int[][]{        {-1, 0}, {0, 1}});
+        put("7_flip",   new int[][]{        {-1, 0},         {0, -1}});
+        put("5",        new int[][]{{1, 0},          {0, 1}});
+        put("5_flip",   new int[][]{{1, 0},                  {0, -1}});
+        put("6",        new int[][]{{1, 0}, {-1, 0},         {0, -1}});
+        put("6_flip",   new int[][]{{1, 0}, {-1, 0}, {0, 1}});
+        put("0",        new int[][]{{1, 0}, {-1, 0}});
+    }};
 
     private boolean[] hiddenRevealed = {false, false, false};
     private int numHiddenRevealed = 0;
@@ -106,8 +127,9 @@ public class StudentPlayer extends SaboteurPlayer {
             targetPos = new int[]{nugget.x, nugget.y};
         } else {
             for (int i : new int[]{0, 2, 1}) {
-                if (hiddenRevealed[i])
+                if (hiddenRevealed[i]) {
                     continue;
+                }
 
                 targetPos = new int[]{12, (2 * i) + 3};
                 break;
@@ -147,37 +169,15 @@ public class StudentPlayer extends SaboteurPlayer {
         boolean canPath = false;
         double bestDistance = 100;
         String bestTile = "";
-        int bestTileX = 0;
-        int bestTileY = 0;
-
-        ArrayList<Integer> xPosPotential = new ArrayList<>();
-        ArrayList<Integer> yPosPotential = new ArrayList<>();
+        Coord bestTileCoord = null;
 
         boolean overrideSequenceSearch = false;
 
-        for (int i = 0; i < possibleMoves.size(); i++) {
-            SaboteurMove c = possibleMoves.get(i);
+        for (SaboteurMove c : possibleMoves) {
             String cardName = c.getCardPlayed().getName();
+            String tileName = cardName.split(":")[1];
 
-            if (cardName.startsWith("Tile")
-                    && !cardName.split(":")[1].equals("1")
-                    && !cardName.split(":")[1].equals("1_flip")
-                    && !cardName.split(":")[1].equals("2")
-                    && !cardName.split(":")[1].equals("2_flip")
-                    && !cardName.split(":")[1].equals("3")
-                    && !cardName.split(":")[1].equals("3_flip")
-                    && !cardName.split(":")[1].equals("4")
-                    && !cardName.split(":")[1].equals("4_flip")
-                    && !cardName.split(":")[1].equals("11")
-                    && !cardName.split(":")[1].equals("11_flip")
-                    && !cardName.split(":")[1].equals("12")
-                    && !cardName.split(":")[1].equals("12_flip")
-                    && !cardName.split(":")[1].equals("13")
-                    && !cardName.split(":")[1].equals("14")
-                    && !cardName.split(":")[1].equals("14_flip")
-                    && !cardName.split(":")[1].equals("15")
-
-            ) {
+            if (cardName.startsWith("Tile") && !DEAD_END_TILES.contains(tileName)) {
                 isMalus = false; //we know we are not injured (by mallus) because we can still play
                 canPath = true;
 
@@ -185,178 +185,36 @@ public class StudentPlayer extends SaboteurPlayer {
                 int xPosPlayed = c.getPosPlayed()[0];
                 int yPosPlayed = c.getPosPlayed()[1];
 
-                // clear the arrays to make new space
-                xPosPotential.removeAll(xPosPotential);
-                yPosPotential.removeAll(yPosPotential);
-
-                //some booleans for calculations below
-                boolean isNineOrEight = false;
-                boolean isFive = false;
-                boolean isZero = false;
-
-                int rank = 0;
-                if (cardName.split(":")[1].equals("8")) {
-                    if (board[xPosPlayed + 1][yPosPlayed] == null) {
-                        xPosPotential.add(xPosPlayed + 1);
-                        yPosPotential.add( yPosPlayed);
-                    }
-                    if (board[xPosPlayed - 1][yPosPlayed] == null) {
-                        xPosPotential.add( xPosPlayed - 1);
-                        yPosPotential.add(yPosPlayed);
-                    }
-                    if (board[xPosPlayed][yPosPlayed + 1] == null) {
-                        xPosPotential.add(xPosPlayed);
-                        yPosPotential.add(yPosPlayed + 1);
-                    }
-                    if (board[xPosPlayed][yPosPlayed - 1] == null) {
-                        xPosPotential.add( xPosPlayed);
-                        yPosPotential.add(yPosPlayed - 1);
-                    }
-                    isNineOrEight = true;
-                }
-                else if (cardName.split(":")[1].equals("9")) {
-                    if (board[xPosPlayed + 1][yPosPlayed] == null) {
-                        xPosPotential.add(xPosPlayed + 1);
-                        yPosPotential.add( yPosPlayed);
-                    }
-                    if (board[xPosPlayed][yPosPlayed - 1] == null) {
-                        xPosPotential.add(xPosPlayed);
-                        yPosPotential.add(yPosPlayed - 1);
-                    }
-                    if (board[xPosPlayed][yPosPlayed + 1] == null) {
-                        xPosPotential.add(xPosPlayed);
-                        yPosPotential.add(yPosPlayed + 1);
-                    }
-                    isNineOrEight = true;
-                }
-                else if (cardName.split(":")[1].equals("9_flip")) {
-                    if (board[xPosPlayed - 1][yPosPlayed] == null) {
-                        xPosPotential.add(xPosPlayed - 1);
-                        yPosPotential.add( yPosPlayed);
-                    }
-                    if (board[xPosPlayed][yPosPlayed - 1] == null) {
-                        xPosPotential.add(xPosPlayed);
-                        yPosPotential.add(yPosPlayed - 1);
-                    }
-                    if (board[xPosPlayed][yPosPlayed + 1] == null) {
-                        xPosPotential.add(xPosPlayed);
-                        yPosPotential.add(yPosPlayed + 1);
-                    }
-                    isNineOrEight = true;
-                }
-                else if (cardName.split(":")[1].equals("10")) {
-                    if (board[xPosPlayed][yPosPlayed + 1] == null) {
-                        xPosPotential.add(xPosPlayed);
-                        yPosPotential.add(yPosPlayed + 1);
-                    }
-                    if (board[xPosPlayed][yPosPlayed - 1] == null) {
-                        xPosPotential.add(xPosPlayed);
-                        yPosPotential.add(yPosPlayed - 1);
-                    }
-                }
-                else if (cardName.split(":")[1].equals("7")) {
-                    if (board[xPosPlayed - 1][yPosPlayed] == null) {
-                        xPosPotential.add(xPosPlayed - 1);
-                        yPosPotential.add(yPosPlayed);
-                    }
-                    if (board[xPosPlayed][yPosPlayed + 1] == null) {
-                        xPosPotential.add( xPosPlayed);
-                        yPosPotential.add(yPosPlayed + 1);
-                    }
-                }
-                else if (cardName.split(":")[1].equals("7_flip")) {
-                    if (board[xPosPlayed - 1][yPosPlayed] == null) {
-                        xPosPotential.add(xPosPlayed - 1);
-                        yPosPotential.add(yPosPlayed);
-                    }
-                    if (board[xPosPlayed][yPosPlayed - 1] == null) {
-                        xPosPotential.add( xPosPlayed);
-                        yPosPotential.add(yPosPlayed - 1);
-                    }
-                }
-                else if (cardName.split(":")[1].equals("5")) {
-                    if (board[xPosPlayed + 1][yPosPlayed] == null) {
-                        xPosPotential.add(xPosPlayed + 1);
-                        yPosPotential.add( yPosPlayed);
-                    }
-                    if (board[xPosPlayed][yPosPlayed + 1] == null) {
-                        xPosPotential.add(xPosPlayed);
-                        yPosPotential.add(yPosPlayed + 1);
-                    }
-                    isFive = true;
-                }
-                else if (cardName.split(":")[1].equals("5_flip")) {
-                    if (board[xPosPlayed + 1][yPosPlayed] == null) {
-                        xPosPotential.add(xPosPlayed + 1);
-                        yPosPotential.add( yPosPlayed);
-                    }
-                    if (board[xPosPlayed][yPosPlayed - 1] == null) {
-                        xPosPotential.add(1, xPosPlayed);
-                        yPosPotential.add(1, yPosPlayed - 1);
-                    }
-                    isFive = true;
-                }
-                else if (cardName.split(":")[1].equals("6")) {
-                    if (board[xPosPlayed -1][yPosPlayed] == null) {
-                        xPosPotential.add(xPosPlayed - 1);
-                        yPosPotential.add(yPosPlayed);
-                    }
-                    if (board[xPosPlayed + 1][yPosPlayed] == null) {
-                        xPosPotential.add(xPosPlayed + 1);
-                        yPosPotential.add(yPosPlayed);
-                    }
-                    if (board[xPosPlayed][yPosPlayed - 1] == null) {
-                        xPosPotential.add(xPosPlayed);
-                        yPosPotential.add(yPosPlayed - 1);
-                    }
-                }
-                else if (cardName.split(":")[1].equals("6_flip")) {
-                    if (board[xPosPlayed -1][yPosPlayed] == null) {
-                        xPosPotential.add(xPosPlayed - 1);
-                        yPosPotential.add(yPosPlayed);
-                    }
-                    if (board[xPosPlayed + 1][yPosPlayed] == null) {
-                        xPosPotential.add(xPosPlayed + 1);
-                        yPosPotential.add(yPosPlayed);
-                    }
-                    if (board[xPosPlayed][yPosPlayed + 1] == null) {
-                        xPosPotential.add(xPosPlayed);
-                        yPosPotential.add(yPosPlayed + 1);
-                    }
-                }
-                else if (cardName.split(":")[1].equals("0")) {
-                    if (board[xPosPlayed -1][yPosPlayed] == null) {
-                        xPosPotential.add(xPosPlayed - 1);
-                        yPosPotential.add(yPosPlayed);
-                    }
-                    if (board[xPosPlayed + 1][yPosPlayed] == null) {
-                        xPosPotential.add(xPosPlayed + 1);
-                        yPosPotential.add(yPosPlayed);
-                    }
-                    isZero = true;
-                }
+                ArrayList<Coord> posPotential = new ArrayList<>();
 
                 int target = 0;
-
                 double smallestCartesianDistance = 100;
 
-                for (int xxx = 0; xxx < xPosPotential.size(); xxx++){
-                    int xDistance = (xPosPotential.get(xxx) - 12);
+                for (int[] dir : DIRECTIONS.get(tileName)) {
+                    int x = xPosPlayed + dir[0];
+                    int y = yPosPlayed + dir[1];
+                    if (board[x][y] != null) {
+                        continue;
+                    }
+
+                    Coord pos = new Coord(x, y);
+
+                    int xDistance = (pos.x - 12);
                     int yDistance = 0;
                     if (nugget != null) {
-                        yDistance = (yPosPotential.get(xxx) - nugget.y);
+                        yDistance = (pos.y - nugget.y);
                         target = nugget.y;
                     }
                     else if (hiddenRevealed[0]) {
-                        yDistance = (yPosPotential.get(xxx) - 6);
+                        yDistance = (pos.y - 6);
                         target = 6;
                     }
                     else if (hiddenRevealed[2]) {
-                        yDistance = (yPosPotential.get(xxx) - 4);
+                        yDistance = (pos.y - 4);
                         target = 4;
                     }
                     else {
-                        yDistance = (yPosPotential.get(xxx) - 5);
+                        yDistance = (pos.y - 5);
                         target = 5;
                     }
                     double cartesianDistance = Math.sqrt((xDistance * xDistance) + (yDistance * yDistance));
@@ -369,51 +227,43 @@ public class StudentPlayer extends SaboteurPlayer {
                     }
                 }
 
-
-                if ((round == 1) && (isFive)){
-                    smallestCartesianDistance = -100;
+                ///////////////////
+                // SPECIAL MOVES //
+                ///////////////////
+                boolean isNineOrEight = tileName.equals("8") || tileName.equals("9") || tileName.equals("9_flip");
+                if ((round == 1 && tileName.equals("5")) ||
+                    (round <= 2 && tileName.equals("0")) ||
+                    (isNineOrEight && (target == 4) && (xPosPlayed == 12) && (yPosPlayed == 4)) ||
+                    (isNineOrEight && (target == 6) && (xPosPlayed == 12) && (yPosPlayed == 6)) ||
+                    (tileName.equals("0") && ((target == 6) || (target == 4)) && (xPosPlayed == 12) && ((yPosPlayed == 6) || (yPosPlayed == 4))))
+                {
                     overrideSequenceSearch = true;
-                }
-                else if ((round <= 2) && (isZero)){
-                    smallestCartesianDistance = -100;
-                    overrideSequenceSearch = true;
-                }
-                else if (isNineOrEight && (target == 4) && (xPosPlayed == 12) && (yPosPlayed == 4)) {
-                    smallestCartesianDistance = -100;
-                    overrideSequenceSearch = true;
-                }
-                else if (isNineOrEight && (target == 6) && (xPosPlayed == 12) && (yPosPlayed == 6)) {
-                    smallestCartesianDistance = -100;
-                    overrideSequenceSearch = true;
-                }
-                else if (isZero && ((target == 6) || (target == 4)) && (xPosPlayed == 12) && ((yPosPlayed == 6) || (yPosPlayed == 4))) {
-                    smallestCartesianDistance = 100;
                 }
 
                 System.out.println("smallestCartesianDistance: " + smallestCartesianDistance);
                 System.out.println("bestDistance: " + bestDistance);
+                System.out.println("overrideSequenceSearch: " + overrideSequenceSearch);
 
-
-                if (smallestCartesianDistance < bestDistance) {
+                if (smallestCartesianDistance < bestDistance || overrideSequenceSearch) {
                     System.out.println("smallestCartesianDistance: " + smallestCartesianDistance);
                     System.out.println("bestDistance: " + bestDistance);
                     bestDistance = smallestCartesianDistance;
                     System.out.println("smallestCartesianDistance: " + smallestCartesianDistance);
                     System.out.println("bestDistance: " + bestDistance);
                     bestTile = c.getCardPlayed().getName().split(":")[1];
-                    bestTileX = c.getPosPlayed()[0];
-                    bestTileY = c.getPosPlayed()[1];
+                    bestTileCoord = new Coord(c.getPosPlayed()[0], c.getPosPlayed()[1]);
                 }
             }
+
             if (c.getCardPlayed().getName().startsWith("Destroy")) {
                 canPath = true;
                 canDestroy = true;
                 int xPosPlayed = c.getPosPlayed()[0];
                 int yPosPlayed = c.getPosPlayed()[1];
 
-                // clear the arrays to make new space
-                xPosPotential.removeAll(xPosPotential);
-                yPosPotential.removeAll(yPosPotential);
+                ArrayList<Integer> xPosPotential = new ArrayList<>();
+                ArrayList<Integer> yPosPotential = new ArrayList<>();
+
                 SaboteurCard cardBelow = board[xPosPlayed + 1][yPosPlayed];
                 SaboteurCard cardAbove = board[xPosPlayed - 1][yPosPlayed];
                 SaboteurCard cardRight = board[xPosPlayed][yPosPlayed + 1];
@@ -502,19 +352,12 @@ public class StudentPlayer extends SaboteurPlayer {
         }
 
         else if (hasMapCard && nugget == null) {
-            if (!hiddenRevealed[0]) {
-                myMove = new SaboteurMove(new SaboteurMap(),12,3,id);
-                return myMove;
+            for (int i : new int[]{0, 2, 1}) {
+                if (!hiddenRevealed[0]) {
+                    myMove = new SaboteurMove(new SaboteurMap(),12,(2 * i) + 3,id);
+                    return myMove;
+                }
             }
-            else if (!hiddenRevealed[2]) {
-                myMove = new SaboteurMove(new SaboteurMap(),12,7,id);
-                return myMove;
-            }
-            else if (!hiddenRevealed[1]) {
-                myMove = new SaboteurMove(new SaboteurMap(),12,5,id);
-                return myMove;
-            }
-
         }
 
         else if (isMalus && hasBonusCard && canBonus) {
@@ -568,7 +411,7 @@ public class StudentPlayer extends SaboteurPlayer {
                 myMove = new SaboteurMove((new SaboteurDestroy()),bestDestroyableX,bestDestroyableY,id);
             }
             else {
-                myMove = new SaboteurMove((new SaboteurTile(bestTile)),bestTileX,bestTileY,id);
+                myMove = new SaboteurMove((new SaboteurTile(bestTile)),bestTileCoord.x,bestTileCoord.x,id);
             }
         }
 
