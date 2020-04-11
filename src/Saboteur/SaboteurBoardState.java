@@ -213,30 +213,30 @@ public class SaboteurBoardState extends BoardState {
         return outboard;
     }
     public ArrayList<SaboteurCard> getPlayerCardsForDisplay(int playernb){
-        if(playernb==turnPlayer){
+//        if(playernb==turnPlayer){
             if(turnPlayer==1){
                 return player1Cards;
             }
             else{
                 return player2Cards;
             }
-        }
-        else{
-            if(turnPlayer==1){
-                ArrayList<SaboteurCard> p1hidden = new ArrayList<>();
-                for (SaboteurCard c : this.player1Cards){
-                    p1hidden.add(new SaboteurTile("goalTile"));
-                }
-                return p1hidden;
-            }
-            else{
-                ArrayList<SaboteurCard> p2hidden = new ArrayList<>();
-                for (SaboteurCard c : this.player2Cards){
-                    p2hidden.add(new SaboteurTile("goalTile"));
-                }
-                return p2hidden;
-            }
-        }
+//        }
+//        else{
+//            if(turnPlayer==1){
+//                ArrayList<SaboteurCard> p1hidden = new ArrayList<>();
+//                for (SaboteurCard c : this.player1Cards){
+//                    p1hidden.add(new SaboteurTile("goalTile"));
+//                }
+//                return p1hidden;
+//            }
+//            else{
+//                ArrayList<SaboteurCard> p2hidden = new ArrayList<>();
+//                for (SaboteurCard c : this.player2Cards){
+//                    p2hidden.add(new SaboteurTile("goalTile"));
+//                }
+//                return p2hidden;
+//            }
+//        }
     }
 
     public ArrayList<SaboteurCard> getCurrentPlayerCards(){
