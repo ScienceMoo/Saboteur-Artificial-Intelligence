@@ -5,6 +5,12 @@ import java.util.ArrayList;
 import Saboteur.SaboteurMove;
 
 public class SequenceScore {
-    int minCardsToReachEnd = 100;
-    ArrayList<SaboteurMove> cards;
+    public int minCardsToReachEnd = 100;
+    public ArrayList<SaboteurMove> moves;
+
+    public SequenceScore(int minCards) {
+        this.minCardsToReachEnd = minCards;
+        this.moves = new ArrayList<>();
+    }
 }
+

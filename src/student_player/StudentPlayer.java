@@ -35,7 +35,6 @@ public class StudentPlayer extends SaboteurPlayer {
     }};
 
     private boolean[] hiddenRevealed = {false, false, false};
-    private int numHiddenRevealed = 0;
     private Coord nugget = null;
 
     public StudentPlayer() {
@@ -86,10 +85,6 @@ public class StudentPlayer extends SaboteurPlayer {
             }
         }
 
-        int bestCardToPlayIndex = 0;
-        int bestCardToPlayPositionX = 0;
-        int bestCardToPlayPositionY = 0;
-        boolean firstCardFlipped = false;
         ArrayList<Integer> cardsToAvoidDropping = new ArrayList<>();
 
         int[] targetPos = new int[]{12, 5};
@@ -106,32 +101,32 @@ public class StudentPlayer extends SaboteurPlayer {
             }
         }
 
-        int[] resultArray = new int[]{-1};
+        ArrayList<SaboteurMove> moves = null;
+
         try {
-            resultArray = MyTools.lookForWinningSequence(hiddenRevealed, boardState, myTilesAndDestroys, targetPos);
+            moves = MyTools.lookForWinningSequence(hiddenRevealed, boardState, myTilesAndDestroys, targetPos);
+            if (moves != null) {
+                winningSequencePossible = true;
+                for (int i = 0; i < moves.size(); i++) {
+                    SaboteurCard card = moves.get(i).getCardPlayed();
+                    for (int index = 0; index < myHand.size(); index++) {
+                        if ((myHand.get(index)).getName().equals(card.getName())){
+                            cardsToAvoidDropping.add(index);
+                        }
+                    }
+                }
+            }
+            else {
+                winningSequencePossible = false;
+            }
         } catch (Exception e) {
-            System.out.println("mytools failed lul");
+            System.out.println("mytools failed");
         }
 
         // TODO: implement winningPossibleForThem
         //winningPossibleForThem = MyTools.checkIfEnemyCanWin(hiddenRevealed, boardState, targetPos);
         //System.out.println("WINNING POSSIBLE FOR THEM: " + winningPossibleForThem);
 
-        if (resultArray[0] != -1) {
-            bestCardToPlayIndex = resultArray[0];
-            bestCardToPlayPositionX = resultArray[1];
-            bestCardToPlayPositionY = resultArray[2];
-            winningSequencePossible = true;
-            firstCardFlipped = resultArray[3] == 1;
-            for (int r = 4; r < 10; r++) {
-                if (resultArray[r] != -1){
-                    cardsToAvoidDropping.add(resultArray[r]);
-                }
-            }
-        }
-        else {
-            winningSequencePossible = false;
-        }
         System.out.println("nugget location known: " + nugget != null);
         System.out.println("winningSequencePossible: " + winningSequencePossible);
 
@@ -213,7 +208,7 @@ public class StudentPlayer extends SaboteurPlayer {
                 ///////////////////
                 boolean isNineOrEight = tileName.equals("8") || tileName.equals("9") || tileName.equals("9_flip");
                 if ((round == 1 && tileName.equals("5")) ||
-                        (round <= 2 && tileName.equals("0")) ||
+                        (round <= 2 && tileName.equals("0") && (xPosPlayed == 6) && (yPosPlayed == 5)) ||
                         (isNineOrEight && (target == 4) && (xPosPlayed == 12) && (yPosPlayed == 4)) ||
                         (isNineOrEight && (target == 6) && (xPosPlayed == 12) && (yPosPlayed == 6)) ||
                         (tileName.equals("0") && ((target == 6) || (target == 4)) && (xPosPlayed == 12) && ((yPosPlayed == 6) || (yPosPlayed == 4)))) {
@@ -367,14 +362,13 @@ public class StudentPlayer extends SaboteurPlayer {
 
             if (winningSequencePossible && !overrideSequenceSearch) {
                 System.out.println("Winning sequence is possible!");
-                System.out.println("bestCardToPlayIndex: " + bestCardToPlayIndex);
 
-                SaboteurCard c = myHand.get(bestCardToPlayIndex);
+                SaboteurMove myMove = moves.get(0);
                 for (SaboteurMove move : possibleMoves) {
                     int x = move.getPosPlayed()[0];
                     int y = move.getPosPlayed()[1];
-                    if (move.getCardPlayed().getName().equals(c.getName()) &&
-                        x == bestCardToPlayPositionX && y == bestCardToPlayPositionY)
+                    if (move.getCardPlayed().getName().equals(myMove.getCardPlayed().getName()) &&
+                        x == myMove.getPosPlayed()[0] && y == myMove.getPosPlayed()[1])
                     {
                         return move;
                     }
@@ -401,10 +395,18 @@ public class StudentPlayer extends SaboteurPlayer {
         if (nugget != null)
             return;
 
-        for (int y : new int[]{3, 5, 7}) {
-            if (!board[12][3].getName().equals("Tile:8")) {
+        int numHiddenRevealed = 0;
+        for (int i = 0; i < 3; i++) {
+            int y = (2 * i) + 3;
+            String tileName = board[12][y].getName();
+            System.out.println("hidden tile: " + tileName);
+            if (tileName.equals("Tile:nugget")) {
                 numHiddenRevealed++;
+                hiddenRevealed[i] = true;
                 nugget = new Coord(12, y);
+            } else if (tileName.startsWith("Tile:hidden")) {
+                numHiddenRevealed++;
+                hiddenRevealed[i] = true;
             }
         }
 

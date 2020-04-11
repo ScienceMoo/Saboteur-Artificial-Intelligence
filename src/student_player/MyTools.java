@@ -14,6 +14,41 @@ public class MyTools {
     public static final int originPos = 5;
     public static final int[][] hiddenPos = {{originPos+7,originPos-2},{originPos+7,originPos},{originPos+7,originPos+2}};
 
+    private static SequenceScore DepthFirstSearch(boolean[] hiddenRevealed, ArrayList<SaboteurCard> remainingCards, SaboteurTile[][] board, int id, int[] targetPos) {
+        if (pathToHidden(board, targetPos)){
+            return new SequenceScore(0);
+        }
+
+        if (remainingCards.size() <= 4) {
+            return new SequenceScore(100);
+        }
+
+        SequenceScore bestSequenceScore = new SequenceScore(100);
+        for (SaboteurCard card : remainingCards) {
+            ArrayList<SaboteurMove> possibleMoves = getPossibleMoves(hiddenRevealed, board, card, id);
+            for (SaboteurMove move : possibleMoves) {
+                ArrayList<SaboteurCard> newRemainingCards = new ArrayList<>();
+                for (int i = 0; i < remainingCards.size(); i++) {
+                    newRemainingCards.add(remainingCards.get(i));
+                }
+                newRemainingCards.remove(card);
+                SaboteurTile[][] newBoard = addCardToBoard(board, move);
+
+                SequenceScore sequenceScore = DepthFirstSearch(hiddenRevealed, newRemainingCards, newBoard, id, targetPos);
+
+                if (sequenceScore.minCardsToReachEnd < bestSequenceScore.minCardsToReachEnd) {
+                    sequenceScore.minCardsToReachEnd += 1;
+                    sequenceScore.moves.add(0, move);
+                    bestSequenceScore = sequenceScore;
+                }
+            }
+        }
+
+        bestSequenceScore.minCardsToReachEnd = bestSequenceScore.moves.size();
+
+        return bestSequenceScore;
+    }
+
     public static SaboteurTile[][] addCardToBoard(SaboteurTile[][] board, SaboteurMove move){
         SaboteurTile[][] newBoard = new SaboteurTile[BOARD_SIZE][BOARD_SIZE];
         for (int i = 0; i < BOARD_SIZE; i++) {
@@ -39,501 +74,19 @@ public class MyTools {
         return newBoard;
     }
 
-    public static int[] lookForWinningSequence(boolean[] hiddenRevealed, SaboteurBoardState boardState, ArrayList<SaboteurCard> myHand, int[] targetPos) {
-        int numCards = myHand.size();
-        int minimumNumberOfMoves = numCards + 1;
-        boolean firstMoveFlipped = false;
-        boolean firstMoveFlippedCurrent = false;
-
-        // int[0] is the index of the card to play
-        // int[1] is the x index to play it at
-        // int[2] is the y index to play it at
-        // int[3] isFlipped
-        // int[4-9] is the cards we want to keep (-1 for null)
-        int[] result = new int[10];
-
-        if (numCards == 0) {
-            result[0] = -1;
-            for (int i = 1; i < 10; i++) {
-                result[i] = -1;
-            }
-            return result;
-        }
-
+    public static ArrayList<SaboteurMove> lookForWinningSequence(boolean[] hiddenRevealed, SaboteurBoardState boardState, ArrayList<SaboteurCard> myHand, int[] targetPos) {
         SaboteurTile[][] board = boardState.getHiddenBoard();
-
         int id = boardState.getTurnPlayer();
 
+        SequenceScore score = DepthFirstSearch(hiddenRevealed, myHand, board, id, targetPos);
 
-        ArrayList<SaboteurCard> currentHandA = new ArrayList<>();
-        ArrayList<SaboteurCard> currentHandB = new ArrayList<>();
-        ArrayList<SaboteurCard> currentHandC = new ArrayList<>();
-        ArrayList<SaboteurCard> currentHandD = new ArrayList<>();
-        ArrayList<SaboteurCard> currentHandE = new ArrayList<>();
-        ArrayList<SaboteurCard> currentHandF = new ArrayList<>();
-        ArrayList<SaboteurCard> currentHandG = new ArrayList<>();
-        for (int sa = 0; sa < myHand.size(); sa++) {
-            currentHandA.add(myHand.get(sa));
-        }
-        //System.out.println(currentHandA.toString());
-        ArrayList<SaboteurMove> possibleMovesA = getPossibleMoves(hiddenRevealed, board, myHand, id);
-        ArrayList<SaboteurMove> possibleMovesB = new ArrayList<>();
-        ArrayList<SaboteurMove> possibleMovesC = new ArrayList<>();
-        ArrayList<SaboteurMove> possibleMovesD = new ArrayList<>();
-        ArrayList<SaboteurMove> possibleMovesE = new ArrayList<>();
-        ArrayList<SaboteurMove> possibleMovesF = new ArrayList<>();
-        ArrayList<SaboteurMove> possibleMovesG = new ArrayList<>();
-
-        //System.out.println("The moves that my AI came up with");
-        //System.out.println(movesToString(possibleMovesA));
-
-        int currentFirstMoveX = -1;
-        int currentFirstMoveY = -1;
-        int bestFirstMoveX = -1;
-        int bestFirstMoveY = -1;
-        boolean[] playedCard = new boolean[numCards];
-        int[] currentSequence = new int[numCards];
-        int[] bestSequence = new int[numCards];
-        bestSequence[0] = 0;
-
-        int i = 0;
-        A: while (i < possibleMovesA.size()) {
-            //System.out.println("start function");
-            //System.out.println(currentHandA.toString());
-            //System.out.println(movesToString(possibleMovesA));
-            currentHandA.removeAll(currentHandA);
-            possibleMovesA.removeAll(possibleMovesA);
-            //System.out.println(currentHandA.toString());
-            //System.out.println(movesToString(possibleMovesA));
-            for (int mh=0; mh<myHand.size(); mh++) {
-                currentHandA.add(myHand.get(mh));
-            }
-            if (currentHandA.size() > 0) {
-                possibleMovesA = getPossibleMoves(hiddenRevealed, board, currentHandA, id);
-                //System.out.println(movesToString(possibleMovesA));
-            }
-            else {
-                break A;
-            }
-            //intialize the board with no moves added to it
-            SaboteurTile[][] boardA = boardState.getHiddenBoard();
-            // reset current hand
-
-            //initialize the playedCardList
-            for (int p = 0; p < numCards; p++) {
-                playedCard[p] = false;
-            }
-
-            //set the first card as played
-            for (int cardIndex = 0; ((cardIndex < numCards) && (!playedCard[cardIndex])); cardIndex++) {
-                String cardName = myHand.get(cardIndex).getName();
-                String cardNameFlipped = cardName + "_flip";
-                String moveCardName = possibleMovesA.get(i).getCardPlayed().getName();
-                if (cardName.equals(moveCardName) || cardNameFlipped.equals(moveCardName)) {
-                    if (playedCard[cardIndex]) {
-                        continue A;
-                    }
-                    if (cardNameFlipped.equals(moveCardName)) {
-                        firstMoveFlippedCurrent = true;
-                    }
-                    playedCard[cardIndex] = true;
-                    currentSequence[0] = cardIndex;
-                    SaboteurTile[][] boardB = addCardToBoard(boardA, possibleMovesA.get(i));
-
-                    if (pathToHidden(boardB, targetPos)) {
-                        if (cardNameFlipped.equals(moveCardName)) {
-                            firstMoveFlipped = true;
-                        }
-                        bestSequence[0] = currentSequence[0];
-                        bestFirstMoveX = possibleMovesA.get(i).getPosPlayed()[0];
-                        bestFirstMoveY = possibleMovesA.get(i).getPosPlayed()[1];
-                        minimumNumberOfMoves = 1;
-                        System.out.println("Can win in one move!");
-                        System.out.println("bestSequence[0]: " + bestSequence[0]);
-                        //System.out.println(movesToString(possibleMovesA));
-                        break A;
-                    }
-                    else {
-                        //System.out.println(currentHandA.toString());
-                        //System.out.println(possibleMovesA.toString());
-                        int actualCardIndex = 0;
-                        for (int ha=0; ha < currentHandA.size(); ha++) {
-                            if (currentHandA.get(ha).getName().equals(possibleMovesA.get(i).getCardPlayed().getName())) {
-                                actualCardIndex = ha;
-                            }
-                        }
-                        currentHandB.removeAll(currentHandB);
-                        for (int sa = 0; sa < currentHandA.size(); sa++) {
-                            if (sa != actualCardIndex) {
-                                currentHandB.add(currentHandA.get(sa));
-                            }
-                        }
-                        possibleMovesB.removeAll(possibleMovesB);
-//                        System.out.println("currentHandB: " + currentHandB.toString());
-                        if (currentHandB.size() > 0) {
-                            possibleMovesB = getPossibleMoves(hiddenRevealed, boardB, currentHandB, id);
-                        }
-
-//                        System.out.println("possibleMovesB: " + movesToString(possibleMovesB));
-                        int b = 0;
-                        B: while (b < possibleMovesB.size()) {
-                            //set the card as played
-                            for (cardIndex = 0; ((cardIndex < numCards) && (!playedCard[cardIndex])); cardIndex++) {
-                                cardName = myHand.get(cardIndex).getName();
-                                cardNameFlipped = cardName + "_flip";
-                                moveCardName = possibleMovesB.get(b).getCardPlayed().getName();
-
-                                if (cardName.equals(moveCardName) || cardNameFlipped.equals(moveCardName)) {
-                                    if (playedCard[cardIndex]) {
-                                        continue B;
-                                    }
-                                    playedCard[cardIndex] = true;
-                                    currentSequence[1] = cardIndex;
-                                    SaboteurTile[][] boardC = addCardToBoard(boardB, possibleMovesB.get(b));
-
-                                    if (pathToHidden(boardC, targetPos) && (2 < minimumNumberOfMoves)) {
-                                        firstMoveFlipped = firstMoveFlippedCurrent;
-                                        System.out.println("Can win in 2 moves!");
-                                        System.out.println("possibleMovesB: " + possibleMovesB);
-                                        minimumNumberOfMoves = 2;
-                                        bestFirstMoveX = possibleMovesA.get(i).getPosPlayed()[0];
-                                        bestFirstMoveY = possibleMovesA.get(i).getPosPlayed()[1];
-                                        bestSequence[0] = currentSequence[0];
-                                        bestSequence[1] = cardIndex;
-                                        break B;
-                                    }
-                                    else {
-                                        System.out.println(currentHandB.toString());
-                                        actualCardIndex = 0;
-                                        for (int ha=0; ha < currentHandB.size(); ha++) {
-                                            if (currentHandB.get(ha).getName().equals(possibleMovesB.get(b).getCardPlayed().getName())) {
-                                                actualCardIndex = ha;
-                                            }
-                                        }
-                                        //System.out.println(currentHandB.toString());
-                                        currentHandC.removeAll(currentHandC);
-                                        for (int sa = 0; sa < currentHandB.size(); sa++) {
-                                            if (sa != actualCardIndex) {
-                                                currentHandC.add(currentHandB.get(sa));
-                                            }
-                                        }
-                                        //System.out.println(currentHandC.toString());
-                                        possibleMovesC.removeAll(possibleMovesC);
-                                        if (currentHandC.size() > 0) {
-                                            possibleMovesC = getPossibleMoves(hiddenRevealed, boardC, currentHandC, id);
-                                        }
-                                        //System.out.println(movesToString(possibleMovesC));
-                                        int c = 0;
-                                        C: while (c < possibleMovesC.size()) {
-                                            //set the card as played
-                                            for (cardIndex = 0; ((cardIndex < numCards) && (!playedCard[cardIndex])); cardIndex++) {
-                                                cardName = myHand.get(cardIndex).getName();
-                                                cardNameFlipped = cardName + "_flip";
-                                                moveCardName = possibleMovesC.get(c).getCardPlayed().getName();
-
-                                                if (cardName.equals(moveCardName) || cardNameFlipped.equals(moveCardName)) {
-                                                    if (playedCard[cardIndex]) {
-                                                        continue C;
-                                                    }
-                                                    playedCard[cardIndex] = true;
-                                                    currentSequence[2] = cardIndex;
-                                                    SaboteurTile[][] boardD = addCardToBoard(boardC, possibleMovesC.get(c));
-
-                                                    if (pathToHidden(boardD, targetPos) && (3 < minimumNumberOfMoves)) {
-                                                        firstMoveFlipped = firstMoveFlippedCurrent;
-                                                        System.out.println("Can win in 3 moves!");
-                                                        //System.out.println(possibleMovesC);
-                                                        minimumNumberOfMoves = 3;
-                                                        bestFirstMoveX = possibleMovesA.get(i).getPosPlayed()[0];
-                                                        bestFirstMoveY = possibleMovesA.get(i).getPosPlayed()[1];
-                                                        bestSequence[0] = currentSequence[0];
-                                                        bestSequence[1] = currentSequence[1];
-                                                        bestSequence[2] = cardIndex;
-                                                        break C;
-                                                    }
-                                                    else {
-                                                        actualCardIndex = 0;
-                                                        for (int ha=0; ha < currentHandC.size(); ha++) {
-                                                            cardName = currentHandC.get(ha).getName();
-                                                            cardNameFlipped = cardName + "_flip";
-                                                            moveCardName = possibleMovesC.get(c).getCardPlayed().getName();
-                                                            if (cardName.equals(moveCardName) || cardNameFlipped.equals(moveCardName)) {
-                                                                actualCardIndex = ha;
-                                                            }
-                                                        }
-                                                        currentHandD.removeAll(currentHandD);
-                                                        for (int sa = 0; sa < currentHandC.size(); sa++) {
-                                                            if (sa != actualCardIndex) {
-                                                                currentHandD.add(currentHandC.get(sa));
-                                                            }
-                                                        }
-                                                        //System.out.println(currentHandD.toString());
-                                                        possibleMovesD.removeAll(possibleMovesD);
-                                                        if (currentHandD.size() > 0) {
-                                                            possibleMovesD = getPossibleMoves(hiddenRevealed, boardD, currentHandD, id);
-                                                        }
-                                                        //System.out.println(possibleMovesD.toString());
-                                                        int d = 0;
-                                                        D: while (d < possibleMovesD.size()) {
-                                                            //set the card as played
-                                                            for (cardIndex = 0; ((cardIndex < numCards) && (!playedCard[cardIndex])); cardIndex++) {
-                                                                cardName = myHand.get(cardIndex).getName();
-                                                                cardNameFlipped = cardName + "_flip";
-                                                                moveCardName = possibleMovesD.get(d).getCardPlayed().getName();
-
-                                                                if (cardName.equals(moveCardName) || cardNameFlipped.equals(moveCardName)) {
-                                                                    if (playedCard[cardIndex]) {
-                                                                        continue D;
-                                                                    }
-                                                                    playedCard[cardIndex] = true;
-                                                                    currentSequence[3] = cardIndex;
-                                                                    SaboteurTile[][] boardE = addCardToBoard(boardD, possibleMovesD.get(d));
-
-                                                                    if (pathToHidden(boardE, targetPos) && (4 < minimumNumberOfMoves)) {
-                                                                        firstMoveFlipped = firstMoveFlippedCurrent;
-                                                                        System.out.println("Can win in 4 moves!");
-                                                                        //System.out.println(possibleMovesD);
-                                                                        minimumNumberOfMoves = 4;
-                                                                        bestFirstMoveX = possibleMovesA.get(i).getPosPlayed()[0];
-                                                                        bestFirstMoveY = possibleMovesA.get(i).getPosPlayed()[1];
-                                                                        bestSequence[0] = currentSequence[0];
-                                                                        bestSequence[1] = currentSequence[1];
-                                                                        bestSequence[2] = currentSequence[2];
-                                                                        bestSequence[3] = cardIndex;
-                                                                        break D;
-                                                                    }
-                                                                    else {
-                                                                        actualCardIndex = 0;
-                                                                        for (int ha=0; ha < currentHandD.size(); ha++) {
-                                                                            cardName = currentHandD.get(ha).getName();
-                                                                            cardNameFlipped = cardName + "_flip";
-                                                                            moveCardName = possibleMovesD.get(d).getCardPlayed().getName();
-                                                                            if (cardName.equals(moveCardName) || cardNameFlipped.equals(moveCardName)) {
-                                                                                actualCardIndex = ha;
-                                                                            }
-                                                                        }
-                                                                        currentHandE.removeAll(currentHandE);
-                                                                        for (int sa = 0; sa < currentHandD.size(); sa++) {
-                                                                            if (sa != actualCardIndex) {
-                                                                                currentHandE.add(currentHandD.get(sa));
-                                                                            }
-                                                                        }
-                                                                        //System.out.println(currentHandE.toString());
-                                                                        possibleMovesE.removeAll(possibleMovesE);
-                                                                        if (currentHandE.size() > 0) {
-                                                                            possibleMovesE = getPossibleMoves(hiddenRevealed, boardE, currentHandE, id);
-                                                                        }
-                                                                        //System.out.println(possibleMovesE.toString());
-                                                                        int e = 0;
-                                                                        E: while (e < possibleMovesE.size()) {
-                                                                            //set the card as played
-                                                                            for (cardIndex = 0; ((cardIndex < numCards) && (!playedCard[cardIndex])); cardIndex++) {
-                                                                                cardName = myHand.get(cardIndex).getName();
-                                                                                cardNameFlipped = cardName + "_flip";
-                                                                                moveCardName = possibleMovesE.get(e).getCardPlayed().getName();
-
-                                                                                if (cardName.equals(moveCardName) || cardNameFlipped.equals(moveCardName)) {
-                                                                                    if (playedCard[cardIndex]) {
-                                                                                        continue E;
-                                                                                    }
-                                                                                    playedCard[cardIndex] = true;
-                                                                                    currentSequence[4] = cardIndex;
-                                                                                    SaboteurTile[][] boardF = addCardToBoard(boardE, possibleMovesE.get(e));
-
-                                                                                    if (pathToHidden(boardF, targetPos) && (5 < minimumNumberOfMoves)) {
-                                                                                        firstMoveFlipped = firstMoveFlippedCurrent;
-                                                                                        System.out.println("Can win in 5 moves!");
-                                                                                        //System.out.println(possibleMovesE);
-                                                                                        minimumNumberOfMoves = 5;
-                                                                                        bestFirstMoveX = possibleMovesA.get(i).getPosPlayed()[0];
-                                                                                        bestFirstMoveY = possibleMovesA.get(i).getPosPlayed()[1];
-                                                                                        bestSequence[0] = currentSequence[0];
-                                                                                        bestSequence[1] = currentSequence[1];
-                                                                                        bestSequence[2] = currentSequence[2];
-                                                                                        bestSequence[3] = currentSequence[3];
-                                                                                        bestSequence[4] = cardIndex;
-                                                                                        break E;
-                                                                                    }
-                                                                                    else {
-                                                                                        actualCardIndex = 0;
-                                                                                        for (int ha=0; ha < currentHandE.size(); ha++) {
-                                                                                            cardName = currentHandE.get(ha).getName();
-                                                                                            cardNameFlipped = cardName + "_flip";
-                                                                                            moveCardName = possibleMovesE.get(e).getCardPlayed().getName();
-                                                                                            if (cardName.equals(moveCardName) || cardNameFlipped.equals(moveCardName)) {
-                                                                                                actualCardIndex = ha;
-                                                                                            }
-                                                                                        }
-                                                                                        currentHandF.removeAll(currentHandF);
-                                                                                        for (int sa = 0; sa < currentHandE.size(); sa++) {
-                                                                                            if (sa != actualCardIndex) {
-                                                                                                currentHandF.add(currentHandE.get(sa));
-                                                                                            }
-                                                                                        }
-                                                                                        //System.out.println(currentHandF.toString());
-                                                                                        possibleMovesF.removeAll(possibleMovesF);
-                                                                                        if (currentHandF.size() > 0) {
-                                                                                            possibleMovesF = getPossibleMoves(hiddenRevealed, boardF, currentHandF, id);
-                                                                                        }
-                                                                                        //System.out.println(possibleMovesF.toString());
-                                                                                        int f = 0;
-                                                                                        F: while (f < possibleMovesF.size()) {
-                                                                                            //set the card as played
-                                                                                            for (cardIndex = 0; ((cardIndex < numCards) && (!playedCard[cardIndex])); cardIndex++) {
-                                                                                                cardName = myHand.get(cardIndex).getName();
-                                                                                                cardNameFlipped = cardName + "_flip";
-                                                                                                moveCardName = possibleMovesF.get(f).getCardPlayed().getName();
-
-                                                                                                if (cardName.equals(moveCardName) || cardNameFlipped.equals(moveCardName)) {
-                                                                                                    if (playedCard[cardIndex]) {
-                                                                                                        continue F;
-                                                                                                    }
-                                                                                                    playedCard[cardIndex] = true;
-                                                                                                    currentSequence[5] = cardIndex;
-                                                                                                    SaboteurTile[][] boardG = addCardToBoard(boardF, possibleMovesF.get(f));
-
-                                                                                                    if (pathToHidden(boardG, targetPos) && (6 < minimumNumberOfMoves)) {
-                                                                                                        firstMoveFlipped = firstMoveFlippedCurrent;
-                                                                                                        System.out.println("Can win in 6 moves!");
-                                                                                                        //System.out.println(possibleMovesF);
-                                                                                                        minimumNumberOfMoves = 6;
-                                                                                                        bestFirstMoveX = possibleMovesA.get(i).getPosPlayed()[0];
-                                                                                                        bestFirstMoveY = possibleMovesA.get(i).getPosPlayed()[1];
-                                                                                                        bestSequence[0] = currentSequence[0];
-                                                                                                        bestSequence[1] = currentSequence[1];
-                                                                                                        bestSequence[2] = currentSequence[2];
-                                                                                                        bestSequence[3] = currentSequence[3];
-                                                                                                        bestSequence[4] = currentSequence[4];
-                                                                                                        bestSequence[5] = cardIndex;
-                                                                                                        break F;
-                                                                                                    }
-                                                                                                    else {
-                                                                                                        actualCardIndex = 0;
-                                                                                                        for (int ha=0; ha < currentHandF.size(); ha++) {
-                                                                                                            cardName = currentHandF.get(ha).getName();
-                                                                                                            cardNameFlipped = cardName + "_flip";
-                                                                                                            moveCardName = possibleMovesF.get(f).getCardPlayed().getName();
-                                                                                                            if (cardName.equals(moveCardName) || cardNameFlipped.equals(moveCardName)) {
-                                                                                                                actualCardIndex = ha;
-                                                                                                            }
-                                                                                                        }
-                                                                                                        currentHandG.removeAll(currentHandG);
-                                                                                                        for (int sa = 0; sa < currentHandF.size(); sa++) {
-                                                                                                            if (sa != actualCardIndex) {
-                                                                                                                currentHandG.add(currentHandF.get(sa));
-                                                                                                            }
-                                                                                                        }
-                                                                                                        //System.out.println(currentHandG.toString());
-                                                                                                        possibleMovesG.removeAll(possibleMovesG);
-                                                                                                        if (currentHandG.size() > 0) {
-                                                                                                            possibleMovesG = getPossibleMoves(hiddenRevealed, boardG, currentHandG, id);
-                                                                                                        }
-                                                                                                        //System.out.println(possibleMovesG.toString());
-                                                                                                        int g = 0;
-                                                                                                        G: while (g < possibleMovesG.size()) {
-                                                                                                            //set the card as played
-                                                                                                            for (cardIndex = 0; ((cardIndex < numCards) && (!playedCard[cardIndex])); cardIndex++) {
-                                                                                                                cardName = myHand.get(cardIndex).getName();
-                                                                                                                cardNameFlipped = cardName + "_flip";
-                                                                                                                moveCardName = possibleMovesG.get(g).getCardPlayed().getName();
-
-                                                                                                                if (cardName.equals(moveCardName) || cardNameFlipped.equals(moveCardName)) {
-                                                                                                                    if (playedCard[cardIndex]) {
-                                                                                                                        continue G;
-                                                                                                                    }
-                                                                                                                    playedCard[cardIndex] = true;
-                                                                                                                    currentSequence[6] = cardIndex;
-                                                                                                                    SaboteurTile[][] boardH = addCardToBoard(boardG, possibleMovesG.get(g));
-
-                                                                                                                    if (pathToHidden(boardH, targetPos) && (7 < minimumNumberOfMoves)) {
-                                                                                                                        firstMoveFlipped = firstMoveFlippedCurrent;
-                                                                                                                        System.out.println("Can win in 7 moves!");
-                                                                                                                        //System.out.println(possibleMovesG);
-                                                                                                                        minimumNumberOfMoves = 7;
-                                                                                                                        bestFirstMoveX = possibleMovesA.get(i).getPosPlayed()[0];
-                                                                                                                        bestFirstMoveY = possibleMovesA.get(i).getPosPlayed()[1];
-                                                                                                                        bestSequence[0] = currentSequence[0];
-                                                                                                                        bestSequence[1] = currentSequence[1];
-                                                                                                                        bestSequence[2] = currentSequence[2];
-                                                                                                                        bestSequence[3] = currentSequence[3];
-                                                                                                                        bestSequence[4] = currentSequence[4];
-                                                                                                                        bestSequence[5] = currentSequence[5];
-                                                                                                                        bestSequence[6] = cardIndex;
-                                                                                                                        break G;
-                                                                                                                    }
-                                                                                                                    break;
-                                                                                                                }
-                                                                                                            }
-                                                                                                            g++;
-                                                                                                        }
-                                                                                                    }
-                                                                                                    break;
-                                                                                                }
-                                                                                            }
-                                                                                            f++;
-                                                                                        }
-                                                                                    }
-                                                                                    break;
-                                                                                }
-                                                                            }
-                                                                            e++;
-                                                                        }
-                                                                    }
-                                                                    break;
-                                                                }
-                                                            }
-                                                            d++;
-                                                        }
-                                                    }
-                                                    break;
-                                                }
-                                            }
-                                            c++;
-                                        }
-                                    }
-                                    break;
-                                }
-                            }
-                            b++;
-                        }
-                    }
-
-                    break;
-                }
-            }
-            i++;
-        }
-
-        if (minimumNumberOfMoves == numCards + 1) {
-            result[0] = -1;
-            for (int l = 1; l < 10; l++) {
-                result[l] = -1;
-            }
+        if (score.minCardsToReachEnd < 10 && !score.moves.isEmpty()) {
+            return score.moves;
         }
         else {
-            //System.out.println("\n\nRESULTS OF LOOKING FOR WINNING SEQUENCE");
-            //System.out.println(handToString(myHand));
-            result[0] = bestSequence[0];
-            //System.out.println("result[0]: " + result[0]);
-            result[1] = bestFirstMoveX;
-            //System.out.println("result[1]: " + result[1]);
-            result[2] = bestFirstMoveY;
-            //System.out.println("result[2]: " + result[2]);
-            if (firstMoveFlipped) {
-                result[3] = 1;
-            }
-            else {
-                result[3] = 0;
-            }
-            //System.out.println("result[4]: " + result[4]);
-            for (int z = 0; z < minimumNumberOfMoves - 1; z++) {
-                result[z+4] = bestSequence[z + 1];
-            }
-            for (int z = minimumNumberOfMoves - 1; z < 14; z++) {
-                result[z+4] = -1;
-            }
+            return null;
         }
-        return result;
+
     }
 
     public static boolean checkIfEnemyCanWin(boolean[] hiddenRevealed, SaboteurBoardState boardState, int[] targetPos) {
@@ -576,8 +129,8 @@ public class MyTools {
             }
 
             System.out.println("Randomly generated enemy hand: " + randomHand);
-            int[] resultArray = lookForWinningSequence(hiddenRevealed, boardState, randomHand, targetPos);
-            if (resultArray[0] != -1) {
+            ArrayList<SaboteurMove> moves = lookForWinningSequence(hiddenRevealed, boardState, randomHand, targetPos);
+            if (moves != null) {
                 result = true;
             }
         }
@@ -586,34 +139,32 @@ public class MyTools {
     }
 
 
-    public static ArrayList<SaboteurMove> getPossibleMoves(boolean[] hiddenRevealed, SaboteurTile[][] board, ArrayList<SaboteurCard> hand, int id) {
+    public static ArrayList<SaboteurMove> getPossibleMoves(boolean[] hiddenRevealed, SaboteurTile[][] board, SaboteurCard card, int id) {
         ArrayList<SaboteurMove> legalMoves = new ArrayList<>();
 
-        for(SaboteurCard card : hand){
-            if( card instanceof SaboteurTile) {
-                ArrayList<int[]> allowedPositions = positionsForTile(hiddenRevealed, board, (SaboteurTile)card);
-                for(int[] pos:allowedPositions){
-                    legalMoves.add(new SaboteurMove(card,pos[0],pos[1],id));
-                }
-                //if the card can be flipped, we also had legal moves where the card is flipped;
-                if(SaboteurTile.canBeFlipped(((SaboteurTile)card).getIdx())){
-                    SaboteurTile flippedCard = ((SaboteurTile)card).getFlipped();
-                    ArrayList<int[]> allowedPositionsflipped = positionsForTile(hiddenRevealed, board, flippedCard);
-                    for(int[] pos:allowedPositionsflipped){
-                        legalMoves.add(new SaboteurMove(flippedCard,pos[0],pos[1],id));
-                    }
+        if (card instanceof SaboteurTile) {
+            ArrayList<int[]> allowedPositions = positionsForTile(hiddenRevealed, board, (SaboteurTile) card);
+            for(int[] pos:allowedPositions){
+                legalMoves.add(new SaboteurMove(card,pos[0],pos[1],id));
+            }
+            //if the card can be flipped, we also had legal moves where the card is flipped;
+            if(SaboteurTile.canBeFlipped(((SaboteurTile)card).getIdx())){
+                SaboteurTile flippedCard = ((SaboteurTile)card).getFlipped();
+                ArrayList<int[]> allowedPositionsflipped = positionsForTile(hiddenRevealed, board, flippedCard);
+                for(int[] pos:allowedPositionsflipped){
+                    legalMoves.add(new SaboteurMove(flippedCard,pos[0],pos[1],id));
                 }
             }
-            else if(card instanceof SaboteurDestroy){
-                for (int i = 0; i < BOARD_SIZE; i++) {
-                    for (int j = 0; j < BOARD_SIZE; j++) { //we can't destroy an empty tile, the starting, or final tiles.
-                        if(board[i][j] != null && (i!=originPos || j!= originPos) && (i != hiddenPos[0][0] || j!=hiddenPos[0][1] )
-                                && (i != hiddenPos[1][0] || j!=hiddenPos[1][1] ) && (i != hiddenPos[2][0] || j!=hiddenPos[2][1] ) ){
-                            legalMoves.add(new SaboteurMove(card,i,j,id));
-                        }
-                    }
-                }
-            }
+        }
+        else if(card instanceof SaboteurDestroy){
+//            for (int i = 0; i < BOARD_SIZE; i++) {
+//                for (int j = 0; j < BOARD_SIZE; j++) { //we can't destroy an empty tile, the starting, or final tiles.
+//                    if(board[i][j] != null && (i!=originPos || j!= originPos) && (i != hiddenPos[0][0] || j!=hiddenPos[0][1] )
+//                            && (i != hiddenPos[1][0] || j!=hiddenPos[1][1] ) && (i != hiddenPos[2][0] || j!=hiddenPos[2][1] ) ){
+//                        legalMoves.add(new SaboteurMove(card,i,j,id));
+//                    }
+//                }
+//            }
         }
         return legalMoves;
     }
@@ -859,33 +410,5 @@ public class MyTools {
         return boardString.toString();
     }
 
-    private SequenceScore DepthFirstSearch(ArrayList<SaboteurCard> remainingCards, SaboteurTile[][] board) {
-        if (reachedEnd) {
-            return new SequenceScore(0, new ArrayList<>());
-        }
 
-        if (remainingCards.isEmpty()) {
-            return new SequenceScore(100, new ArrayList<>());
-        }
-
-        SequenceScore bestSequenceScore = new SequenceScore();
-        for (SaboteurCard card : remainingCards) {
-
-            ArrayList<SaboteurMove> possibleMoves = getPossibleMoves(hiddenRevealed, board, remainingCards, id);
-            for (SaboteurMove move : possibleMoves) {
-                ArrayList<SaboteurCard> newRemainingCards = // copy;
-                newRemainingCards.remove(card);
-                SaboteurTile[][] newBoard = addCardToBoard(board, move);
-
-                SequenceScore sequenceScore = DepthFirstSearch(newRemainingCards, newBoard);
-
-                sequenceScore.cards.add(0, move);
-                if (sequenceScore.minCardsToReachEnd > bestSequenceScore.minCardsToReachEnd) {
-                    bestSequenceScore = sequenceScore;
-                }
-            }
-        }
-
-        return bestSequenceScore;
-    }
 }
