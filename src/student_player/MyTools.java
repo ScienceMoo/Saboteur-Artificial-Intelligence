@@ -25,26 +25,23 @@ public class MyTools {
 
         SequenceScore bestSequenceScore = new SequenceScore(100);
         for (SaboteurCard card : remainingCards) {
+
             ArrayList<SaboteurMove> possibleMoves = getPossibleMoves(hiddenRevealed, board, card, id);
             for (SaboteurMove move : possibleMoves) {
-                ArrayList<SaboteurCard> newRemainingCards = new ArrayList<>();
-                for (int i = 0; i < remainingCards.size(); i++) {
-                    newRemainingCards.add(remainingCards.get(i));
-                }
-                newRemainingCards.remove(card);
                 SaboteurTile[][] newBoard = addCardToBoard(board, move);
 
+                ArrayList<SaboteurCard> newRemainingCards = new ArrayList<>(remainingCards);
+                newRemainingCards.remove(card);
+
                 SequenceScore sequenceScore = DepthFirstSearch(hiddenRevealed, newRemainingCards, newBoard, id, targetPos);
+                sequenceScore.minCardsToReachEnd += 1;
 
                 if (sequenceScore.minCardsToReachEnd < bestSequenceScore.minCardsToReachEnd) {
-                    sequenceScore.minCardsToReachEnd += 1;
                     sequenceScore.moves.add(0, move);
                     bestSequenceScore = sequenceScore;
                 }
             }
         }
-
-        bestSequenceScore.minCardsToReachEnd = bestSequenceScore.moves.size();
 
         return bestSequenceScore;
     }
@@ -157,14 +154,14 @@ public class MyTools {
             }
         }
         else if(card instanceof SaboteurDestroy){
-//            for (int i = 0; i < BOARD_SIZE; i++) {
-//                for (int j = 0; j < BOARD_SIZE; j++) { //we can't destroy an empty tile, the starting, or final tiles.
-//                    if(board[i][j] != null && (i!=originPos || j!= originPos) && (i != hiddenPos[0][0] || j!=hiddenPos[0][1] )
-//                            && (i != hiddenPos[1][0] || j!=hiddenPos[1][1] ) && (i != hiddenPos[2][0] || j!=hiddenPos[2][1] ) ){
-//                        legalMoves.add(new SaboteurMove(card,i,j,id));
-//                    }
-//                }
-//            }
+            for (int i = 0; i < BOARD_SIZE; i++) {
+                for (int j = 0; j < BOARD_SIZE; j++) { //we can't destroy an empty tile, the starting, or final tiles.
+                    if(board[i][j] != null && (i!=originPos || j!= originPos) && (i != hiddenPos[0][0] || j!=hiddenPos[0][1] )
+                            && (i != hiddenPos[1][0] || j!=hiddenPos[1][1] ) && (i != hiddenPos[2][0] || j!=hiddenPos[2][1] ) ){
+                        legalMoves.add(new SaboteurMove(card,i,j,id));
+                    }
+                }
+            }
         }
         return legalMoves;
     }
@@ -390,7 +387,7 @@ public class MyTools {
     }
 
     public static String handToString(ArrayList<SaboteurCard> hand) {
-        String result = "My hand: ";
+        String result = "";
         for (int i = 0; i < hand.size(); i++) {
             SaboteurCard card = hand.get(i);
             result += card.getName() + "; ";
