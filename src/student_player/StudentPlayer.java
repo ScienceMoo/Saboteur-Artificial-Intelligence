@@ -35,9 +35,10 @@ public class StudentPlayer extends SaboteurPlayer {
         put("0",        new int[][]{{1, 0}, {-1, 0}});
     }};
 
-    private boolean[] targetRevealed = {false, false, false};
-    private boolean[] hiddenRevealed = {false, false, false};
+    private final boolean[] targetRevealed = {false, false, false};
+    private final boolean[] hiddenRevealed = {false, false, false};
     private Coord nugget = null;
+    private boolean destroyedEntrance = false;
 
     public StudentPlayer() {
         super("SUCCESS");
@@ -101,15 +102,20 @@ public class StudentPlayer extends SaboteurPlayer {
         SaboteurMove bestDropMove = null;
         int bestDropScore = -1;
         int destroyCards = 0;
+        int bonusCards = 0;
 
         SaboteurMove bonusMove = null;
         SaboteurMove malusMove = null;
         SaboteurMove mapMove = null;
+        SaboteurMove destroyEntranceMove = null;
 
         boolean overrideSequenceSearch = false;
 
         for (SaboteurMove move : possibleMoves) {
             String cardName = move.getCardPlayed().getName();
+
+            int xPosPlayed = move.getPosPlayed()[0];
+            int yPosPlayed = move.getPosPlayed()[1];
 
             switch (cardName.split(":")[0]) {
                 case "Map":
@@ -122,10 +128,13 @@ public class StudentPlayer extends SaboteurPlayer {
                     bonusMove = move;
                     continue;
                 case "Destroy":
+                    if (xPosPlayed == 6 && yPosPlayed == 5 && board[7][5] != null) {
+                        destroyEntranceMove = move;
+                    }
                     continue;
                 case "Drop":
                     int dropScore = -1;
-                    String cardDroppedName = myHand.get(move.getPosPlayed()[0]).getName();
+                    String cardDroppedName = myHand.get(xPosPlayed).getName();
                     switch (cardDroppedName.split(":")[0]) {
                         case "Map":
                             dropScore = nugget == null ? 0 : 5;
@@ -137,11 +146,17 @@ public class StudentPlayer extends SaboteurPlayer {
                             dropScore = 2;
                             break;
                         case "Bonus":
-                            dropScore = 0;
+                            bonusCards += 1;
+                            if (bonusCards > 2) {
+                                shouldDrop = true;
+                                dropScore = 5;
+                            } else {
+                                dropScore = 0;
+                            }
                             break;
                         case "Destroy":
                             destroyCards += 1;
-                            if (destroyCards <= 1) {
+                            if (destroyCards > 1) {
                                 shouldDrop = true;
                                 dropScore = 5;
                             } else {
@@ -168,9 +183,6 @@ public class StudentPlayer extends SaboteurPlayer {
 
                     if (DEAD_END_TILES.contains(tileName))
                         continue;
-
-                    int xPosPlayed = move.getPosPlayed()[0];
-                    int yPosPlayed = move.getPosPlayed()[1];
 
                     double smallestDistance = 100;
 
@@ -261,6 +273,12 @@ public class StudentPlayer extends SaboteurPlayer {
         if (overrideSequenceSearch) {
             System.out.println("playing an override card");
             return bestTileMove;
+        }
+
+        if (destroyEntranceMove != null) {
+            System.out.println("!!!!DESTROYING THE ENTRANCE!!!!");
+            destroyedEntrance = true;
+            return destroyEntranceMove;
         }
 
         if (winningMoves != null) {
