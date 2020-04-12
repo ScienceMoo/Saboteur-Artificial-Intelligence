@@ -28,7 +28,7 @@ public class StudentPlayer extends SaboteurPlayer {
         put("7",        new int[][]{        {-1, 0}, {0, 1}});
         put("7_flip",   new int[][]{        {-1, 0},         {0, -1}});
         put("5",        new int[][]{{1, 0},          {0, 1}});
-        put("5_flip",   new int[][]{{1, 0},                  {0, -1}});
+        put("5_flip",   new int[][]{        {-1, 0},         {0, -1}});
         put("6",        new int[][]{{1, 0}, {-1, 0},         {0, -1}});
         put("6_flip",   new int[][]{{1, 0}, {-1, 0}, {0, 1}});
         put("0",        new int[][]{{1, 0}, {-1, 0}});
