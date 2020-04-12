@@ -102,10 +102,12 @@ public class StudentPlayer extends SaboteurPlayer {
         System.out.println("targetPos: " + targetPos[0] + "," + targetPos[1]);
 
         Coord midpointTarget = new Coord(targetPos[0], targetPos[1]);
+        if (nugget == null) {
         if (midpointTarget.y == 3) {
             midpointTarget = new Coord(12, 4);
         } else if (midpointTarget.y == 7) {
             midpointTarget = new Coord(12, 6);
+        }
         }
         System.out.println("midpointTarget: " + midpointTarget.x + "," + midpointTarget.y);
 
