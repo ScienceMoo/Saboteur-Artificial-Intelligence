@@ -18,7 +18,7 @@ public class OtherStudent extends SaboteurPlayer {
      * associate you with your agent. The constructor should do nothing else.
      */
     public OtherStudent() {
-        super("260805212");
+        super("otherStudent");
     }
 
     /**
