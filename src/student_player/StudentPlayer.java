@@ -420,7 +420,7 @@ public class StudentPlayer extends SaboteurPlayer {
             }
         }
 
-        if (numHiddenRevealed == 2) {
+        if (numHiddenRevealed == 2 && nugget == null) {
             for (int i = 0; i < 3; i++) {
                 if (!hiddenRevealed[i]) {
                     hiddenRevealed[i] = true;
