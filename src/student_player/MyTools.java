@@ -182,8 +182,6 @@ public class MyTools {
                 requiredEmptyAround -= 1;
             else {
                 int[][] neighborPath = neighborCard.getPath();
-                //System.out.println("neighborPath: " + neighborPath);
-                //System.out.println("path: " + path);
                 if (path[2][0] != neighborPath[0][0] || path[2][1] != neighborPath[0][1] || path[2][2] != neighborPath[0][2])
                     return false;
                 else if (path[2][0] == 0 && path[2][1] == 0 && path[2][2] == 0)

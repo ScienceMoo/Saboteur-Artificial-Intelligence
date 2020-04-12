@@ -51,10 +51,6 @@ public class StudentPlayer extends SaboteurPlayer {
         ArrayList<SaboteurCard> myHand = boardState.getCurrentPlayerCards();
         ArrayList<SaboteurMove> possibleMoves = boardState.getAllLegalMoves();
 
-        System.out.println("\n\n\nTurn " + boardState.getTurnNumber() + "\n");
-        System.out.println("Hand: " + handToString(myHand));
-        System.out.println("Moves: " + MyTools.movesToString(possibleMoves));
-
         SaboteurTile[][] board = boardState.getHiddenBoard();
         checkNugget(board);
 
@@ -72,7 +68,6 @@ public class StudentPlayer extends SaboteurPlayer {
                 break;
             }
         }
-        System.out.println("targetPos: " + targetPos.x + "," + targetPos.y);
 
         Coord midpointTarget = targetPos;
         if (nugget == null) {
@@ -82,7 +77,6 @@ public class StudentPlayer extends SaboteurPlayer {
                 midpointTarget = new Coord(12, 6);
             }
         }
-        System.out.println("midpointTarget: " + midpointTarget.x + "," + midpointTarget.y);
 
         for (int i = 0; i < 3; ++i) {
             if (hiddenRevealed[i])
@@ -194,8 +188,6 @@ public class StudentPlayer extends SaboteurPlayer {
                         }
                     }
 
-//                    System.out.println("Move " + move.toTransportable() + " distance " + smallestDistance);
-
                     boolean isNineOrEight = tileName.equals("8") || tileName.equals("9") || tileName.equals("9_flip");
                     if ((round == 1 && tileName.equals("5") && (xPosPlayed == 5)) ||
                         (round <= 2 && tileName.equals("0") && (xPosPlayed == 6) && (yPosPlayed == 5)) ||
@@ -230,19 +222,7 @@ public class StudentPlayer extends SaboteurPlayer {
         ArrayList<SaboteurMove> winningMoves =
                 MyTools.lookForWinningSequence(boardState, tilesAndDestroys, new int[]{targetPos.x, targetPos.y}, hiddenRevealed);
 
-        if (winningMoves == null) {
-            System.out.println("Can't win yet");
-        } else {
-            System.out.println("Winning sequence found, size " + winningMoves.size());
-            for (SaboteurMove move : winningMoves) {
-                System.out.println("\t" + move.toTransportable());
-            }
-        }
-
-        System.out.println("best tile move: " + (bestTileMove == null ? "null" : bestTileMove.toTransportable()) + ", distance: " + bestTileDistance + ", overrideSequenceSearch: " + overrideSequenceSearch);
-
         SaboteurCard bestDropCard = myHand.get(bestDropMove.getPosPlayed()[0]);
-        System.out.println("best drop move: " + bestDropCard.getName() + ", score: " + bestDropScore);
 
         if (mapMove != null && nugget == null) {
             for (int i : new int[]{0, 2, 1}) {
@@ -257,7 +237,6 @@ public class StudentPlayer extends SaboteurPlayer {
         }
 
         if (isMalus) {
-            System.out.println("MALUS");
             if (bonusMove != null) {
                 return bonusMove;
             }
@@ -266,7 +245,6 @@ public class StudentPlayer extends SaboteurPlayer {
         }
 
         if (overrideSequenceSearch) {
-            System.out.println("playing an override card");
             return bestTileMove;
         }
 
@@ -281,13 +259,11 @@ public class StudentPlayer extends SaboteurPlayer {
             }
 
             if (destroyEntranceMove != null) {
-                System.out.println("!!!!DESTROYING THE ENTRANCE!!!!");
                 return destroyEntranceMove;
             }
         }
 
         if (winningMoves != null) {
-            System.out.println("playing a winning move");
             SaboteurMove firstMove = winningMoves.get(0);
             if (winningMoves.size() > 1 && firstMove.getPosPlayed()[0] == 6 && firstMove.getPosPlayed()[1] == 5) {
                 // save repairing the entrance for last
@@ -299,22 +275,20 @@ public class StudentPlayer extends SaboteurPlayer {
 
         // TODO: improve this to calculate the actual minimum number of moves to victory
         if (bestTileDistance <= 0) {
-            System.out.println("near the end but can't win, dropping a card");
+            //near the end but can't win, dropping a card
             return bestDropMove;
         }
 
         if (shouldDrop) {
-            System.out.println("far from the end and should drop, dropping a bad card");
+            //far from the end and should drop, dropping a bad card
             return bestDropMove;
         }
 
         if (bestTileMove != null) {
-            System.out.println("playing bestTileMove");
             return bestTileMove;
         }
 
         if (boardState.getTurnNumber() > 42) {
-            System.out.println("we should have won by now :(");
             return boardState.getRandomMove();
         }
 
@@ -333,7 +307,6 @@ public class StudentPlayer extends SaboteurPlayer {
                 numHiddenRevealed++;
                 targetRevealed[i] = true;
                 nugget = new Coord(12, y);
-                System.out.println("Found the nugget at " + nugget.x + "," + nugget.y);
             } else if (tileName.startsWith("Tile:hidden")) {
                 numHiddenRevealed++;
                 targetRevealed[i] = true;
@@ -345,7 +318,6 @@ public class StudentPlayer extends SaboteurPlayer {
                 if (!targetRevealed[i]) {
                     targetRevealed[i] = true;
                     nugget = new Coord(12, (2 * i) + 3);
-                    System.out.println("Deduced the nugget at " + nugget.x + "," + nugget.y);
                 }
             }
         }
