@@ -194,56 +194,6 @@ public class MyTools {
 
     }
 
-    public static boolean checkIfEnemyCanWin(boolean[] hiddenRevealed, SaboteurBoardState boardState, int[] targetPos) {
-        boolean result = false;
-
-        for (int i = 0; i < 50; i++) {
-            ArrayList<SaboteurCard> randomHand = new ArrayList<>();
-            for (int j = 0; j < 7; j++) {
-                int randomNum = (int)(Math.random()*((4-1)+1))+1;
-                //System.out.println("randomNum: " + randomNum);
-                int randomTile = (int)(Math.random()*((10-0)+0))+0;
-                //System.out.println("otherRandomNum: " + randomTile);
-                int randomFlip = (int)(Math.random()*((2-1)+1))+1;
-                //System.out.println("randomFlip: " + randomFlip);
-
-
-                if (randomNum < 4) {
-                    if (randomTile == 0 || randomTile == 1 || randomTile == 10) {
-                        //System.out.println("creating non-flippable tile");
-                        SaboteurCard randomCard = new SaboteurTile("" + randomTile);
-                        randomHand.add(randomCard);
-                    }
-                    else {
-                        //System.out.println("creating flippable tile");
-                        if (randomFlip == 1) {
-                            SaboteurCard randomCard = new SaboteurTile("" + randomTile);
-                            randomHand.add(randomCard);
-                        }
-                        else if (randomFlip == 2) {
-                            SaboteurCard randomCard = new SaboteurTile("" + randomTile + "_flip");
-                            randomHand.add(randomCard);
-                        }
-                    }
-
-                }
-                if (randomNum == 4) {
-                    SaboteurCard randomCard = new SaboteurDestroy();
-                    randomHand.add(randomCard);
-                }
-            }
-
-            System.out.println("Randomly generated enemy hand: " + randomHand);
-            ArrayList<SaboteurMove> moves = lookForWinningSequence(hiddenRevealed, boardState, randomHand, targetPos);
-            if (moves != null) {
-                result = true;
-            }
-        }
-        //System.out.println(result);
-        return result;
-    }
-
-
     public static ArrayList<SaboteurMove> getPossibleMoves(boolean[] hiddenRevealed, SaboteurTile[][] board, SaboteurCard card, int id) {
         ArrayList<SaboteurMove> legalMoves = new ArrayList<>();
 
@@ -491,7 +441,6 @@ public class MyTools {
         }
         return result;
     }
-
     public static String handToString(ArrayList<SaboteurCard> hand) {
         String result = "";
         for (int i = 0; i < hand.size(); i++) {
@@ -500,18 +449,4 @@ public class MyTools {
         }
         return result;
     }
-
-    public static String intBoardToString(int[][] intBoard) {
-        StringBuilder boardString = new StringBuilder();
-        for (int i = 0; i < BOARD_SIZE*3; i++) {
-            for (int j = 0; j < BOARD_SIZE*3; j++) {
-                boardString.append(intBoard[i][j]);
-                boardString.append(",");
-            }
-            boardString.append("\n");
-        }
-        return boardString.toString();
-    }
-
-
 }
