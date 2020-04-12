@@ -16,12 +16,12 @@ import static student_player.MyTools.handToString;
 import static student_player.MyTools.pathToHidden;
 
 public class StudentPlayer extends SaboteurPlayer {
-    private static ArrayList<String> DEAD_END_TILES = new ArrayList<>(
+    private final static ArrayList<String> DEAD_END_TILES = new ArrayList<>(
         Arrays.asList("1", "1_flip", "2", "2_flip", "3", "3_flip", "4", "4_flip", "11",
             "11_flip", "12", "12_flip", "13", "14", "14_flip", "15")
     );
 
-    private static HashMap<String, int[][]> DIRECTIONS = new HashMap<String, int[][]>() {{
+    private final static HashMap<String, int[][]> DIRECTIONS = new HashMap<String, int[][]>() {{
         put("8",        new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}});
         put("9",        new int[][]{{1, 0},          {0, 1}, {0, -1}});
         put("9_flip",   new int[][]{        {-1, 0}, {0, 1}, {0, -1}});
@@ -38,7 +38,6 @@ public class StudentPlayer extends SaboteurPlayer {
     private final boolean[] targetRevealed = {false, false, false};
     private final boolean[] hiddenRevealed = {false, false, false};
     private Coord nugget = null;
-    private boolean destroyedEntrance = false;
 
     public StudentPlayer() {
         super("SUCCESS");
@@ -107,7 +106,6 @@ public class StudentPlayer extends SaboteurPlayer {
         SaboteurMove bonusMove = null;
         SaboteurMove malusMove = null;
         SaboteurMove mapMove = null;
-        SaboteurMove destroyEntranceMove = null;
 
         boolean overrideSequenceSearch = false;
 
@@ -128,9 +126,6 @@ public class StudentPlayer extends SaboteurPlayer {
                     bonusMove = move;
                     continue;
                 case "Destroy":
-                    if (xPosPlayed == 6 && yPosPlayed == 5 && board[7][5] != null) {
-                        destroyEntranceMove = move;
-                    }
                     continue;
                 case "Drop":
                     int dropScore = -1;
@@ -199,7 +194,7 @@ public class StudentPlayer extends SaboteurPlayer {
                         }
                     }
 
-                    System.out.println("Move " + move.toTransportable() + " distance " + smallestDistance);
+//                    System.out.println("Move " + move.toTransportable() + " distance " + smallestDistance);
 
                     boolean isNineOrEight = tileName.equals("8") || tileName.equals("9") || tileName.equals("9_flip");
                     if ((round == 1 && tileName.equals("5") && (xPosPlayed == 5)) ||
@@ -275,15 +270,31 @@ public class StudentPlayer extends SaboteurPlayer {
             return bestTileMove;
         }
 
-        if (destroyEntranceMove != null) {
-            System.out.println("!!!!DESTROYING THE ENTRANCE!!!!");
-            destroyedEntrance = true;
-            return destroyEntranceMove;
+        if (destroyCards > 0 && bestTileDistance <= 3 && boardState.getTurnNumber() <= 30) {
+            SaboteurMove destroyEntranceMove = null;
+            if (board[6][5] != null && (board[6][4] != null || board[7][5] != null || board[6][6] != null)) {
+                destroyEntranceMove = new SaboteurMove(new SaboteurDestroy(), 6, 5, id);
+            } else if (board[5][4] != null && (board[5][3] != null || board[6][4] != null)) {
+                destroyEntranceMove = new SaboteurMove(new SaboteurDestroy(), 5, 4, id);
+            } else if (board[5][6] != null && (board[5][7] != null || board[6][6] != null)) {
+                destroyEntranceMove = new SaboteurMove(new SaboteurDestroy(), 5, 6, id);
+            }
+
+            if (destroyEntranceMove != null) {
+                System.out.println("!!!!DESTROYING THE ENTRANCE!!!!");
+                return destroyEntranceMove;
+            }
         }
 
         if (winningMoves != null) {
             System.out.println("playing a winning move");
-            return winningMoves.get(0);
+            SaboteurMove firstMove = winningMoves.get(0);
+            if (winningMoves.size() > 1 && firstMove.getPosPlayed()[0] == 6 && firstMove.getPosPlayed()[1] == 5) {
+                // save repairing the entrance for last
+                return winningMoves.get(1);
+            } else {
+                return winningMoves.get(0);
+            }
         }
 
         // TODO: improve this to calculate the actual minimum number of moves to victory

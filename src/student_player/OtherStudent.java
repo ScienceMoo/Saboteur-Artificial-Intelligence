@@ -31,7 +31,7 @@ public class OtherStudent extends SaboteurPlayer {
         // For example, maybe you'll need to load some pre-processed best opening
         // strategies...
 
-        boardState.printBoard();
+//        boardState.printBoard();
 
         // Is random the best you can do?
         SaboteurMove myMove = boardState.getRandomMove();
