@@ -53,36 +53,8 @@ public class StudentPlayer extends SaboteurPlayer {
         System.out.println("Hand: " + handToString(myHand));
         System.out.println("Moves: " + MyTools.movesToString(possibleMoves));
 
-        // LOOK AT THE BOARD
         SaboteurTile[][] board = boardState.getHiddenBoard();
         checkNugget(board);
-
-        // FIND OUT WHAT CARDS I HAVE
-        ArrayList<SaboteurCard> tilesAndDestroys = new ArrayList<>();
-        int deadEndCardIndex = -1;
-        int droppableCardIndex = -1;
-
-        for (int i = 0; i < myHand.size(); i++) {
-            SaboteurCard c = myHand.get(i);
-
-            if (c.getName().equals("Destroy")) {
-                tilesAndDestroys.add(c);
-            }
-            else if (c.getName().split(":")[0].equals("Tile")) {
-                String tileNumber = c.getName().split(":")[1];
-                if (tileNumber.equals("1") || tileNumber.equals("2") || tileNumber.equals("3") ||
-                    tileNumber.equals("4") || tileNumber.equals("11") || tileNumber.equals("12") ||
-                    tileNumber.equals("13") || tileNumber.equals("14") || tileNumber.equals("15")
-                ) {
-                    deadEndCardIndex = i;
-                } else {
-                    tilesAndDestroys.add(c);
-                }
-            } else {
-                droppableCardIndex = i;
-            }
-        }
-
 
         int[] targetPos = new int[]{12, 5};
         if (nugget != null) {
@@ -107,8 +79,6 @@ public class StudentPlayer extends SaboteurPlayer {
         }
         System.out.println("midpointTarget: " + midpointTarget.x + "," + midpointTarget.y);
 
-        ArrayList<SaboteurMove> winningMoves;
-
         // check for winning move
         ArrayList<int[]> targets = new ArrayList<>();
 
@@ -125,23 +95,28 @@ public class StudentPlayer extends SaboteurPlayer {
 
         SaboteurMove winningMove = MyTools.lookForWinningMove(myHand, possibleMoves, board, targets);
 
-        try {
-            winningMoves = MyTools.lookForWinningSequence(hiddenRevealed, boardState, tilesAndDestroys, targetPos);
-
-            if (winningMoves != null) {
-                System.out.println("Winning sequence found:");
-                for (SaboteurMove move : winningMoves) {
-                    System.out.println(move.toTransportable());
-                }
-            }
-        } catch (Exception e) {
-            System.out.println(">>> MyTools.lookForWinningSequence FAILED <<<");
-        }
+//        ArrayList<SaboteurMove> winningMoves;
+//        try {
+//            winningMoves = MyTools.lookForWinningSequence(hiddenRevealed, boardState, tilesAndDestroys, targetPos);
+//
+//            if (winningMoves != null) {
+//                System.out.println("Winning sequence found:");
+//                for (SaboteurMove move : winningMoves) {
+//                    System.out.println(move.toTransportable());
+//                }
+//            }
+//        } catch (Exception e) {
+//            System.out.println(">>> MyTools.lookForWinningSequence FAILED <<<");
+//        }
 
         boolean isMalus = true;
-        double bestTileDistance = 100;
 
         SaboteurMove bestTileMove = null;
+        double bestTileDistance = 100;
+
+        SaboteurMove bestDropMove = null;
+        int bestDropScore = -1;
+
         SaboteurMove bonusMove = null;
         SaboteurMove malusMove = null;
         SaboteurMove mapMove = null;
@@ -161,74 +136,76 @@ public class StudentPlayer extends SaboteurPlayer {
                 case "Bonus":
                     bonusMove = move;
                     continue;
-            }
-
-            if (cardName.startsWith("Tile")) {
-                String tileName = cardName.split(":")[1];
-                isMalus = false; //we know we are not injured (by mallus) because we can still play
-
-                if (DEAD_END_TILES.contains(tileName)) {
+                case "Destroy":
                     continue;
-                }
+                case "Drop":
+                    int dropScore = calcDropScore(myHand.get(move.getPosPlayed()[0]).getName());
+                    if (dropScore > bestDropScore) {
+                        bestDropScore = dropScore;
+                        bestDropMove = move;
+                    }
+                    continue;
+                case "Tile":
+                    String tileName = cardName.split(":")[1];
+                    isMalus = false; //we know we are not injured (by mallus) because we can still play
 
-                System.out.println("analyzing tile move " + move.toTransportable());
-
-                // this is the actual position that the cards are played at
-                int xPosPlayed = move.getPosPlayed()[0];
-                int yPosPlayed = move.getPosPlayed()[1];
-
-                int target = 0;
-                double smallestCartesianDistance = 100;
-
-                for (int[] dir : DIRECTIONS.get(tileName)) {
-                    int x = xPosPlayed + dir[0];
-                    int y = yPosPlayed + dir[1];
-                    if (x >= 0 && y >= 0 && x < BOARD_SIZE && y < BOARD_SIZE && board[x][y] != null) {
+                    if (DEAD_END_TILES.contains(tileName)) {
                         continue;
                     }
 
-                    int xDistance = x - midpointTarget.x;
-                    int yDistance = y - midpointTarget.y;
-                    double cartesianDistance = Math.sqrt((xDistance * xDistance) + (yDistance * yDistance));
+                    int xPosPlayed = move.getPosPlayed()[0];
+                    int yPosPlayed = move.getPosPlayed()[1];
 
-                    if (cartesianDistance < smallestCartesianDistance) {
-                        smallestCartesianDistance = cartesianDistance;
+                    double smallestCartesianDistance = 100;
+                    for (int[] dir : DIRECTIONS.get(tileName)) {
+                        int x = xPosPlayed + dir[0];
+                        int y = yPosPlayed + dir[1];
+                        if (x >= 0 && y >= 0 && x < BOARD_SIZE && y < BOARD_SIZE && board[x][y] != null) {
+                            continue;
+                        }
+
+                        int xDistance = x - midpointTarget.x;
+                        int yDistance = y - midpointTarget.y;
+                        double cartesianDistance = Math.sqrt((xDistance * xDistance) + (yDistance * yDistance));
+
+                        if (cartesianDistance < smallestCartesianDistance) {
+                            smallestCartesianDistance = cartesianDistance;
+                        }
                     }
-                }
 
-                boolean isNineOrEight = tileName.equals("8") || tileName.equals("9") || tileName.equals("9_flip");
-                if ((round == 1 && tileName.equals("5") && (xPosPlayed == 5)) ||
-                    (round <= 2 && tileName.equals("0") && (xPosPlayed == 6) && (yPosPlayed == 5)) ||
-                    (isNineOrEight && (target == 4) && (xPosPlayed == 12) && (yPosPlayed == 4)) ||
-                    (isNineOrEight && (target == 6) && (xPosPlayed == 12) && (yPosPlayed == 6)) ||
-                    (tileName.equals("10") && ((target == 6) || (target == 4)) && (xPosPlayed == 12) && ((yPosPlayed == 6) || (yPosPlayed == 4))))
-                {
-                    bestTileDistance = smallestCartesianDistance;
-                    bestTileMove = move;
-                    overrideSequenceSearch = true;
-                }
+                    boolean isNineOrEight = tileName.equals("8") || tileName.equals("9") || tileName.equals("9_flip");
+                    if ((round == 1 && tileName.equals("5") && (xPosPlayed == 5)) ||
+                        (round <= 2 && tileName.equals("0") && (xPosPlayed == 6) && (yPosPlayed == 5)) ||
+                        (isNineOrEight && midpointTarget.x == 4 && xPosPlayed == 12 && yPosPlayed == 4) ||
+                        (isNineOrEight && midpointTarget.x == 6 && xPosPlayed == 12 && yPosPlayed == 6) ||
+                        (tileName.equals("10") && (midpointTarget.x == 6 || midpointTarget.x == 4) && xPosPlayed == 12 && (yPosPlayed == 6 || yPosPlayed == 4)))
+                    {
+                        bestTileDistance = smallestCartesianDistance;
+                        bestTileMove = move;
+                        overrideSequenceSearch = true;
+                    }
 
-                if ((smallestCartesianDistance < bestTileDistance) && !overrideSequenceSearch) {
-                    bestTileDistance = smallestCartesianDistance;
-                    bestTileMove = move;
-                }
+                    if ((smallestCartesianDistance < bestTileDistance) && !overrideSequenceSearch) {
+                        bestTileDistance = smallestCartesianDistance;
+                        bestTileMove = move;
+                    }
             }
         }
 
         System.out.println("best tile move: " + (bestTileMove == null ? "null" : bestTileMove.toTransportable()) + ", distance: " + bestTileDistance + ", overrideSequenceSearch: " + overrideSequenceSearch);
 
-        boolean nearTheEnd = bestTileDistance <= 2;
-
-        if (malusMove != null && nearTheEnd) {
-            return malusMove;
-        }
+        System.out.println("best drop move: " + bestDropMove.toTransportable() + ", score: " + bestDropMove);
 
         if (mapMove != null && nugget == null) {
             for (int i : new int[]{0, 2, 1}) {
                 if (!hiddenRevealed[i]) {
-                    return new SaboteurMove(new SaboteurMap(),12,(2 * i) + 3,id);
+                    return new SaboteurMove(new SaboteurMap(), 12, (2 * i) + 3, id);
                 }
             }
+        }
+
+        if (malusMove != null && bestTileDistance <= 4) {
+            return malusMove;
         }
 
         if (isMalus) {
@@ -237,21 +214,11 @@ public class StudentPlayer extends SaboteurPlayer {
                 return bonusMove;
             }
 
-            if (deadEndCardIndex != -1) {
-                return new SaboteurMove(new SaboteurDrop(), deadEndCardIndex, 0, id);
-            }
-
-            if (droppableCardIndex != -1 && (boardState.getTurnNumber() > 42)) {
-                return new SaboteurMove(new SaboteurDrop(), droppableCardIndex, 0, id);
-            }
-
-            if (boardState.getTurnNumber() > 42) {
-                return new SaboteurMove(new SaboteurDrop(), 0, 0, id);
-            }
+            return bestDropMove;
         }
 
         if (overrideSequenceSearch) {
-            System.out.println("playing an 'override' card");
+            System.out.println("playing an override card");
             return bestTileMove;
         }
 
@@ -260,19 +227,9 @@ public class StudentPlayer extends SaboteurPlayer {
             return winningMove;
         }
 
-        if ((bestTileDistance == 2) && (nugget != null)) {
+        if (bestTileDistance <= 3) {
             System.out.println("near the end but can't win, dropping a card");
-            if (deadEndCardIndex != -1) {
-                return new SaboteurMove(new SaboteurDrop(), deadEndCardIndex, 0, id);
-            }
-
-            if (malusMove != null) {
-                return malusMove;
-            }
-
-            if (droppableCardIndex != -1) {
-                return new SaboteurMove(new SaboteurDrop(), droppableCardIndex, 0, id);
-            }
+            return bestDropMove;
         }
 
         if (bestTileMove != null) {
@@ -280,7 +237,12 @@ public class StudentPlayer extends SaboteurPlayer {
             return bestTileMove;
         }
 
-        return new SaboteurMove(new SaboteurDrop(), 0, 0, id);
+        if (boardState.getTurnNumber() > 42) {
+            System.out.println("we should have won by now :(");
+            return boardState.getRandomMove();
+        }
+
+        return bestDropMove;
     }
 
     private void checkNugget(SaboteurTile[][] board) {
@@ -295,6 +257,7 @@ public class StudentPlayer extends SaboteurPlayer {
                 numHiddenRevealed++;
                 hiddenRevealed[i] = true;
                 nugget = new Coord(12, y);
+                System.out.println("Found the nugget at " + nugget.x + "," + nugget.y);
             } else if (tileName.startsWith("Tile:hidden")) {
                 numHiddenRevealed++;
                 hiddenRevealed[i] = true;
@@ -309,5 +272,31 @@ public class StudentPlayer extends SaboteurPlayer {
                 }
             }
         }
+    }
+
+    private int calcDropScore(String cardName) {
+        int dropScore = -1;
+        switch (cardName.split(":")[0]) {
+            case "Map":
+                dropScore = nugget == null ? 0 : 5;
+                break;
+            case "Malus":
+                dropScore = 2;
+                break;
+            case "Bonus":
+                dropScore = 0;
+                break;
+            case "Destroy":
+                dropScore = 3;
+                break;
+            case "Tile":
+                if (DEAD_END_TILES.contains(cardName.split(":")[1])) {
+                    dropScore = 4;
+                } else {
+                    dropScore = 1;
+                }
+                break;
+        }
+        return dropScore;
     }
 }
