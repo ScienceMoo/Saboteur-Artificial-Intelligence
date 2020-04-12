@@ -111,6 +111,23 @@ public class StudentPlayer extends SaboteurPlayer {
 
         ArrayList<SaboteurMove> winningMoves = null;
 
+
+        // check for winning move
+        ArrayList<int[]> targets = new ArrayList<>();
+
+        if (nugget != null) {
+            targets.add(new int[]{nugget.x, nugget.y});
+        }
+        else {
+            for (int i = 0; i < 3; i++) {
+                if (!hiddenRevealed[i]) {
+                    targets.add(new int[]{12, (3 + (i*2))});
+                }
+            }
+        }
+
+        SaboteurMove winningMove = MyTools.lookForWinningMove(possibleMoves, board, targets);
+
         try {
             winningMoves = MyTools.lookForWinningSequence(hiddenRevealed, boardState, tilesAndDestroys, targetPos);
 
@@ -315,7 +332,9 @@ public class StudentPlayer extends SaboteurPlayer {
 
             // else, drop any card that's not a potentially valuable card
             if (droppableCardIndex != -1) {
-                return new SaboteurMove(new SaboteurDrop(), droppableCardIndex, 0, id);
+                if (myHand.get(droppableCardIndex).getName() != "Bonus") {
+                    return new SaboteurMove(new SaboteurDrop(), droppableCardIndex, 0, id);
+                }
             }
 
             if (bestDestroyMove != null) {
@@ -323,7 +342,11 @@ public class StudentPlayer extends SaboteurPlayer {
 //                return bestDestroyMove;
             }
 
-            return new SaboteurMove(new SaboteurDrop(), 0, 0, id);
+            for (int x = 0; x < myHand.size(); x++) {
+                if ((myHand.get(x).getName() != "Bonus") || (x == myHand.size() - 1)) {
+                    return new SaboteurMove(new SaboteurDrop(), x, 0, id);
+                }
+            }
         }
 
         else {
@@ -337,22 +360,26 @@ public class StudentPlayer extends SaboteurPlayer {
                 return bestTileMove;
             }
 
-            if (winningMoves != null) {
+            if (winningMove != null) {
                 System.out.println("playing a winning move");
-                return winningMoves.get(0);
+                return winningMove;
             }
 
-            if (bestTileDistance <= 2) {
+            if ((bestTileDistance == 2) && (nugget != null)) {
                 System.out.println("near the end but can't win, dropping a card");
                 if (deadEndCardIndex != -1) {
                     return new SaboteurMove(new SaboteurDrop(), deadEndCardIndex, 0, id);
+                }
+
+                if (malusMove != null) {
+                    return malusMove;
                 }
 
                 if (droppableCardIndex != -1) {
                     return new SaboteurMove(new SaboteurDrop(), droppableCardIndex, 0, id);
                 }
 
-                return new SaboteurMove(new SaboteurDrop(), 0, 0, id);
+                //return new SaboteurMove(new SaboteurDrop(), 0, 0, id);
             }
 
             if (bestTileMove != null) {

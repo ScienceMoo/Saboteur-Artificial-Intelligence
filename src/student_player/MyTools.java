@@ -19,7 +19,7 @@ public class MyTools {
             return new SequenceScore(0);
         }
 
-        if (remainingCards.size() <= 4) {
+        if (remainingCards.size() <= 5) {
             return new SequenceScore(100);
         }
 
@@ -69,6 +69,42 @@ public class MyTools {
             newBoard[pos[0]][pos[1]] = new SaboteurTile(((SaboteurTile) card).getIdx());
         }
         return newBoard;
+    }
+
+    public static SaboteurMove lookForWinningMove(ArrayList<SaboteurMove> moves, SaboteurTile[][] board, ArrayList<int[]> targets) {
+        for (int i = 0; i < moves.size(); i++) {
+            SaboteurCard firstCard = moves.get(i).getCardPlayed();
+            int firstMoveX = moves.get(i).getPosPlayed()[0];
+            int firstMoveY = moves.get(i).getPosPlayed()[1];
+
+            SaboteurTile[][] newBoard = addCardToBoard(board, moves.get(i));
+            for (int j = 0; j < targets.size(); j++) {
+                if (pathToHidden(newBoard, targets.get(j))) {
+                    return moves.get(i);
+                }
+            }
+            for (int x = 0; ((x < moves.size()) && (x != i)); x++) {
+                SaboteurCard secondCard = moves.get(x).getCardPlayed();
+                int secondMoveX = moves.get(x).getPosPlayed()[0];
+                int secondMoveY = moves.get(x).getPosPlayed()[1];
+                if (secondCard.getName().startsWith(firstCard.getName())) {
+                    continue;
+                }
+                else if (firstCard.getName().startsWith(secondCard.getName())) {
+                    continue;
+                }
+                else if ((secondMoveX == firstMoveX) && (secondMoveY == firstMoveY)) {
+                    continue;
+                }
+                SaboteurTile[][] secondNewBoard = addCardToBoard(newBoard, moves.get(x));
+                for (int j = 0; j < targets.size(); j++) {
+                    if (pathToHidden(secondNewBoard, targets.get(j))) {
+                        return moves.get(i);
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     public static ArrayList<SaboteurMove> lookForWinningSequence(boolean[] hiddenRevealed, SaboteurBoardState boardState, ArrayList<SaboteurCard> myHand, int[] targetPos) {
@@ -266,18 +302,6 @@ public class MyTools {
     }
 
     private static boolean pathToHidden(SaboteurTile[][] board, int[] targetPos){
-        /* This function look if a path is linking the starting point to the states among objectives.
-            :return: if there exists one: true
-                     if not: false
-                     In Addition it changes each reached states hidden variable to true:  self.hidden[foundState] <- true
-            Implementation details:
-            For each hidden objectives:
-                We verify there is a path of cards between the start and the hidden objectives.
-                    If there is one, we do the same but with the 0-1s matrix!
-
-            To verify a path, we use a simple search algorithm where we propagate a front of visited neighbor.
-               TODO To speed up: The neighbor are added ranked on their distance to the origin... (simply use a PriorityQueue with a Comparator)
-        */
         int[][] intBoard = new int[44][44];
 
         for (int i = 0; i < BOARD_SIZE; i++) {
@@ -301,6 +325,16 @@ public class MyTools {
         }
 
         boolean atLeastOnefound = false;
+
+        /*ArrayList<Coord> queue = new ArrayList<>();
+        Coord origin = new Coord(targetPos[0], targetPos[1]);
+        queue.add(origin);
+
+        while (queue.size() > 0) {
+
+        }*/
+
+
         ArrayList<int[]> originTargets = new ArrayList<>();
         originTargets.add(new int[]{originPos,originPos}); //the starting points
 
