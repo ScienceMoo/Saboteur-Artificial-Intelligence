@@ -38,7 +38,7 @@ public class StudentPlayer extends SaboteurPlayer {
     private Coord nugget = null;
 
     public StudentPlayer() {
-        super("260805212");
+        super("SUCCESS");
     }
 
     public Move chooseMove(SaboteurBoardState boardState) {
@@ -126,7 +126,7 @@ public class StudentPlayer extends SaboteurPlayer {
             }
         }
 
-        SaboteurMove winningMove = MyTools.lookForWinningMove(possibleMoves, board, targets);
+        SaboteurMove winningMove = MyTools.lookForWinningMove(myHand, possibleMoves, board, targets);
 
         try {
             winningMoves = MyTools.lookForWinningSequence(hiddenRevealed, boardState, tilesAndDestroys, targetPos);
@@ -210,15 +210,17 @@ public class StudentPlayer extends SaboteurPlayer {
                 // SPECIAL MOVES //
                 ///////////////////
                 boolean isNineOrEight = tileName.equals("8") || tileName.equals("9") || tileName.equals("9_flip");
-                if ((round == 1 && tileName.equals("5")) ||
+                if ((round == 1 && tileName.equals("5") && (xPosPlayed == 5)) ||
                         (round <= 2 && tileName.equals("0") && (xPosPlayed == 6) && (yPosPlayed == 5)) ||
                         (isNineOrEight && (target == 4) && (xPosPlayed == 12) && (yPosPlayed == 4)) ||
                         (isNineOrEight && (target == 6) && (xPosPlayed == 12) && (yPosPlayed == 6)) ||
-                        (tileName.equals("0") && ((target == 6) || (target == 4)) && (xPosPlayed == 12) && ((yPosPlayed == 6) || (yPosPlayed == 4)))) {
+                        (tileName.equals("10") && ((target == 6) || (target == 4)) && (xPosPlayed == 12) && ((yPosPlayed == 6) || (yPosPlayed == 4)))) {
+                    bestTileDistance = smallestCartesianDistance;
+                    bestTileMove = move;
                     overrideSequenceSearch = true;
                 }
 
-                if ((smallestCartesianDistance < bestTileDistance) || overrideSequenceSearch) {
+                if ((smallestCartesianDistance < bestTileDistance) && !overrideSequenceSearch) {
                     bestTileDistance = smallestCartesianDistance;
                     bestTileMove = move;
                 }
@@ -331,7 +333,7 @@ public class StudentPlayer extends SaboteurPlayer {
             }
 
             // else, drop any card that's not a potentially valuable card
-            if (droppableCardIndex != -1) {
+            if (droppableCardIndex != -1 && (boardState.getTurnNumber() > 42)) {
                 if (myHand.get(droppableCardIndex).getName() != "Bonus") {
                     return new SaboteurMove(new SaboteurDrop(), droppableCardIndex, 0, id);
                 }
@@ -342,11 +344,14 @@ public class StudentPlayer extends SaboteurPlayer {
 //                return bestDestroyMove;
             }
 
-            for (int x = 0; x < myHand.size(); x++) {
-                if ((myHand.get(x).getName() != "Bonus") || (x == myHand.size() - 1)) {
-                    return new SaboteurMove(new SaboteurDrop(), x, 0, id);
+            if (boardState.getTurnNumber() > 42) {
+                for (int x = 0; x < myHand.size(); x++) {
+                    if ((myHand.get(x).getName() != "Bonus") || (x == myHand.size() - 1)) {
+                        return new SaboteurMove(new SaboteurDrop(), x, 0, id);
+                    }
                 }
             }
+
         }
 
         else {

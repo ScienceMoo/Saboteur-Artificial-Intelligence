@@ -71,15 +71,42 @@ public class MyTools {
         return newBoard;
     }
 
-    public static SaboteurMove lookForWinningMove(ArrayList<SaboteurMove> moves, SaboteurTile[][] board, ArrayList<int[]> targets) {
+    public static SaboteurMove lookForWinningMove(ArrayList<SaboteurCard> myHand, ArrayList<SaboteurMove> moves, SaboteurTile[][] board, ArrayList<int[]> targets) {
+        ArrayList<SaboteurCard> remainingCards = new ArrayList<>();
+        for (int c = 0; c < myHand.size(); c++) {
+            remainingCards.add(myHand.get(c));
+        }
+
+        int bestScore = 10;
+
+        SaboteurMove bestMove = moves.get(0);
+
+        System.out.println("lookForWinningMove Function");
+        for (int t = 0; t < targets.size(); t++) {
+            System.out.println("target x: " + targets.get(t)[0]);
+            System.out.println("target y: " + targets.get(t)[1]);
+        }
+
         for (int i = 0; i < moves.size(); i++) {
             SaboteurCard firstCard = moves.get(i).getCardPlayed();
             int firstMoveX = moves.get(i).getPosPlayed()[0];
             int firstMoveY = moves.get(i).getPosPlayed()[1];
+            System.out.println("card Played: " + firstCard.getName());
+            System.out.println("position x Played: " + moves.get(i).getPosPlayed()[0]);
+            System.out.println("position y Played: " + moves.get(i).getPosPlayed()[1]);
+
+            for (int c = 0; c < remainingCards.size(); c++) {
+                SaboteurCard card = remainingCards.get(c);
+                System.out.println("other card: " + card.getName());
+                if (firstCard.getName().startsWith(card.getName())){
+                    remainingCards.remove(card);
+                }
+            }
 
             SaboteurTile[][] newBoard = addCardToBoard(board, moves.get(i));
             for (int j = 0; j < targets.size(); j++) {
                 if (pathToHidden(newBoard, targets.get(j))) {
+                    System.out.println("Win in 1 move!");
                     return moves.get(i);
                 }
             }
@@ -87,10 +114,17 @@ public class MyTools {
                 SaboteurCard secondCard = moves.get(x).getCardPlayed();
                 int secondMoveX = moves.get(x).getPosPlayed()[0];
                 int secondMoveY = moves.get(x).getPosPlayed()[1];
-                if (secondCard.getName().startsWith(firstCard.getName())) {
-                    continue;
+                boolean cardStillAvailable = false;
+
+                for (int c = 0; c < remainingCards.size(); c++) {
+                    SaboteurCard card = remainingCards.get(c);
+                    if (secondCard.getName().startsWith(card.getName())){
+                        cardStillAvailable = true;
+                        remainingCards.remove(card);
+                    }
                 }
-                else if (firstCard.getName().startsWith(secondCard.getName())) {
+
+                if (!cardStillAvailable) {
                     continue;
                 }
                 else if ((secondMoveX == firstMoveX) && (secondMoveY == firstMoveY)) {
@@ -98,11 +132,49 @@ public class MyTools {
                 }
                 SaboteurTile[][] secondNewBoard = addCardToBoard(newBoard, moves.get(x));
                 for (int j = 0; j < targets.size(); j++) {
-                    if (pathToHidden(secondNewBoard, targets.get(j))) {
-                        return moves.get(i);
+                    if ((bestScore > 2) && pathToHidden(secondNewBoard, targets.get(j))) {
+                        bestScore = 2;
+                        bestMove = moves.get(i);
+                        System.out.println("Win in 2 moves!");
+                    }
+                }
+                for (int w = 0; ((w < moves.size()) && (w != x)); w++) {
+                    SaboteurCard thirdCard = moves.get(w).getCardPlayed();
+                    int thirdMoveX = moves.get(w).getPosPlayed()[0];
+                    int thirdMoveY = moves.get(w).getPosPlayed()[1];
+                    cardStillAvailable = false;
+
+                    for (int c = 0; c < remainingCards.size(); c++) {
+                        SaboteurCard card = remainingCards.get(c);
+                        if (thirdCard.getName().startsWith(card.getName())){
+                            cardStillAvailable = true;
+                            remainingCards.remove(card);
+                        }
+                    }
+
+                    if (!cardStillAvailable) {
+                        continue;
+                    }
+
+                    else if ((thirdMoveX == firstMoveX) && (thirdMoveY == firstMoveY)) {
+                        continue;
+                    }
+                    else if ((thirdMoveX == secondMoveX) && (thirdMoveY == secondMoveY)) {
+                        continue;
+                    }
+                    SaboteurTile[][] thirdNewBoard = addCardToBoard(newBoard, moves.get(w));
+                    for (int j = 0; j < targets.size(); j++) {
+                        if ((bestScore > 3) && pathToHidden(thirdNewBoard, targets.get(j))) {
+                            bestScore = 3;
+                            bestMove = moves.get(i);
+                            System.out.println("Win in 3 moves!");
+                        }
                     }
                 }
             }
+        }
+        if (bestScore < 10) {
+            return bestMove;
         }
         return null;
     }
@@ -353,7 +425,7 @@ public class MyTools {
                 atLeastOnefound =true;
             }
             else{
-                //System.out.println("0-1 path was not found");
+                System.out.println("0-1 path was not found");
             }
         }
 
