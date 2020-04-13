@@ -40,7 +40,7 @@ public class StudentPlayer extends SaboteurPlayer {
     private Coord nugget = null;
 
     public StudentPlayer() {
-        super("SUCCESS");
+        super("260773460, 260805212");
     }
 
     public Move chooseMove(SaboteurBoardState boardState) {
